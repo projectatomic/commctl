@@ -226,18 +226,15 @@ def main():
     get_sp.required = True
     cluster_parser = get_sp.add_parser('cluster')
     cluster_parser.required = True
-    cluster_parser.add_argument(
-        '-n', '--name', required=True, help='Name of the cluster')
+    cluster_parser.add_argument('name', help='Name of the cluster')
 
     restart_parser = get_sp.add_parser('restart')
     restart_parser.required = True
-    restart_parser.add_argument(
-        '-n', '--name', required=True, help='Name of the cluster')
+    restart_parser.add_argument('name', help='Name of the cluster')
 
     upgrade_parser = get_sp.add_parser('upgrade')
     upgrade_parser.required = True
-    upgrade_parser.add_argument(
-        '-n', '--name', required=True, help='Name of the cluster')
+    upgrade_parser.add_argument('name', help='Name of the cluster')
 
     create_parser = sp.add_parser('create')
     create_parser.required = True
@@ -246,20 +243,17 @@ def main():
 
     cluster_parser = create_sp.add_parser('cluster')
     cluster_parser.required = True
-    cluster_parser.add_argument(
-        '-n', '--name', required=True, help='Name of the cluster')
+    cluster_parser.add_argument('name', help='Name of the cluster')
 
     restart_parser = create_sp.add_parser('restart')
     restart_parser.required = True
-    restart_parser.add_argument(
-        '-n', '--name', required=True, help='Name of the cluster')
+    restart_parser.add_argument('name', help='Name of the cluster')
 
     upgrade_parser = create_sp.add_parser('upgrade')
     upgrade_parser.required = True
+    upgrade_parser.add_argument('name', help='Name of the cluster')
     upgrade_parser.add_argument(
-        '-n', '--name', required=True, help='Name of the cluster')
-    upgrade_parser.add_argument(
-        '-u', '--upgrade-to', required=True, help='Version to upgrade to')
+        '-u', '--upgrade-to', help='Version to upgrade to')
 
     list_parser = sp.add_parser('list')
     list_sp = list_parser.add_subparsers(dest='sub_command')
@@ -269,8 +263,7 @@ def main():
 
     list_hosts_parser = list_sp.add_parser('hosts')
     list_hosts_parser.add_argument(
-        '-n', '--name', required=False,
-        help='Name of the cluster (omit to list all hosts)')
+        '-n', '--name', help='Name of the cluster (omit to list all hosts)')
 
     args = parser.parse_args()
 
