@@ -56,7 +56,6 @@ class TestClientScript(TestCase):
                 _get.return_value = mock_return
 
                 sys.argv[2:] = [subcmd, '-n test']
-                print sys.argv
                 client_script.main()
                 self.assertEquals(1, _get.call_count)
                 _get.reset_mock()
@@ -92,7 +91,7 @@ class TestClientScript(TestCase):
                 mock.patch('os.path.realpath')) as (_get, _realpath):
             _realpath.return_value = self.conf
             for subcmd, content in ((['clusters'], '[]'),
-                                    (['hosts'], '{}'),
+                                    (['hosts'], '[]'),
                                     (['hosts', '-n', 'test'], '[]')):
                 mock_return = requests.Response()
                 mock_return._content = content
@@ -100,7 +99,6 @@ class TestClientScript(TestCase):
                 _get.return_value = mock_return
 
                 sys.argv[2:] = subcmd
-                print sys.argv
                 client_script.main()
                 self.assertEquals(1, _get.call_count)
                 _get.reset_mock()
