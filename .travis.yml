@@ -1,0 +1,15 @@
+language: python
+python:
+  - "2.6"
+#  - "3.3"
+install:
+  - "pip install -r requirements.txt"
+  - "pip install -r test-requirements.txt"
+script:
+  - "python setup.py flake8"
+  - "python setup.py nosetests"
+notifications:
+  email: false
+  # This is Colin's instance of Homu, in the future
+  # we'll move this to a production cluster.
+  webhooks: http://escher.verbum.org:54856/travis
