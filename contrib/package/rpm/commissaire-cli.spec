@@ -18,6 +18,7 @@ BuildRequires:  python-flake8
 
 Requires:  python-setuptools
 Requires:  py-bcrypt
+Requires:  PyYAML
 
 %description
 Command line tools for Commissaire.
