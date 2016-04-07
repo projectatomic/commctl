@@ -37,6 +37,64 @@ class ClientError(Exception):
     pass
 
 
+class NoMoreServersError(ClientError):
+    """
+    Raised when no more servers are available to try.
+    """
+    pass
+
+
+class MultiServerSession(requests.Session):
+    """
+    A requests Session which, when given a ConnectionError, will try the same
+    request against the next server it has been provided with.
+    """
+
+    def __init__(self, servers=[]):
+        """
+        Initializes a new instance of the MultiServerSession.
+
+        :param servers: List of servers to try on connection error.
+        :type servers: list
+        """
+        super(MultiServerSession, self).__init__()
+        self._servers = servers
+
+    def request(self, method, path, *args, **kwargs):
+        """
+        Overriden request which tries all available servers in the event
+        of a ConnectionError.
+
+        .. note::
+
+           This override uses ``path`` instead of ``uri``!
+
+        :param method: method for the new :class:`Request` object.
+        :type method: str
+        :param path: Path to request.
+        :type path: str
+        :param args: All other non-keyword arguments.
+        :type args: list
+        :param kwargs: All other keyword arguments.
+        :type kwargs: dict
+        :returns: requests.models.Response
+        :raises: requests.exceptions.ConnectionError
+        """
+        for x in range(0, len(self._servers)):
+            target_url = self._servers[x] + path
+            try:
+                result = super(MultiServerSession, self).request(
+                    method, target_url, *args, **kwargs)
+                return result
+            except requests.ConnectionError:
+                if x != len(self._servers) - 1:
+                    print(
+                        "Could not connect to {0}. Retrying with {1}.".format(
+                            self._servers[x], self._servers[x + 1]))
+                    continue
+                raise NoMoreServersError(*self._servers)
+
+
 class Client(object):
     """
     Client for commissaire.
@@ -51,23 +109,28 @@ class Client(object):
         :returns: A Client instance
         :rtype: Client
         """
-        self.endpoint = conf['endpoint']
-        if self.endpoint.endswith('/'):
-            self.endpoint = self.endpoint[:-1]
-        self._con = requests.Session()
+        self._endpoints = []
+        for ep in conf['endpoint']:
+            if ep.endswith('/'):
+                ep = ep[:-1]
+            self._endpoints.append(ep)
+
+        # Take the first endpoint by default
+        self.endpoint = conf['endpoint'][0]
+        self._con = MultiServerSession(self._endpoints)
         self._con.headers['Content-Type'] = 'application/json'
         self._con.auth = (conf['username'], conf['password'])
 
-    def _get(self, uri):
+    def _get(self, path):
         """
         Shorthand for GETing.
 
-        :param uri: The full uri to GET.
-        :type uri: str
+        :param path: Path to request.
+        :type path: str
         :return: None on success, requests.Response on failure.
         :rtype: None or requests.Response
         """
-        resp = self._con.get(uri)
+        resp = self._con.get(path)
         # Allow any 2xx code
         if resp.status_code > 199 and resp.status_code < 300:
             ret = resp.json()
@@ -78,20 +141,20 @@ class Client(object):
             raise ClientError('Username/Password was incorrect.')
         raise ClientError(
             'Unable to get the object at {0}: {1}'.format(
-                uri, resp.status_code))
+                path, resp.status_code))
 
-    def _put(self, uri, data={}):
+    def _put(self, path, data={}):
         """
         Shorthand for PUTting.
 
-        :param uri: The full uri to PUT.
-        :type uri: str
+        :param path: Path to request.
+        :type path: str
         :param data: Optional dictionary to jsonify and PUT.
         :type data: dict
         :return: None on success, requests.Response of failure.
         :rtype: None or requests.Response
         """
-        resp = self._con.put(uri, data=json.dumps(data))
+        resp = self._con.put(path, data=json.dumps(data))
         if resp.status_code == 201:
             ret = resp.json()
             if ret:
@@ -101,7 +164,7 @@ class Client(object):
             raise ClientError('Username/Password was incorrect.')
         raise ClientError(
             'Unable to create an object at {0}: {1}'.format(
-                uri, resp.status_code))
+                path, resp.status_code))
 
     def get_cluster(self, name, **kwargs):
         """
@@ -112,7 +175,7 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        return self._get('{0}/api/v0/cluster/{1}'.format(self.endpoint, name))
+        return self._get('/api/v0/cluster/{0}'.format(name))
 
     def create_cluster(self, name, **kwargs):
         """
@@ -123,7 +186,7 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        uri = '{0}/api/v0/cluster/{1}'.format(self.endpoint, name)
+        uri = '/api/v0/cluster/{0}'.format(name)
         return self._put(uri)
 
     def get_restart(self, name, **kwargs):
@@ -135,7 +198,7 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        uri = '{0}/api/v0/cluster/{1}/restart'.format(self.endpoint, name)
+        uri = '/api/v0/cluster/{0}/restart'.format(name)
         return self._get(uri)
 
     def create_restart(self, name, **kwargs):
@@ -147,7 +210,7 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        uri = '{0}/api/v0/cluster/{1}/restart'.format(self.endpoint, name)
+        uri = '/api/v0/cluster/{0}/restart'.format(name)
         return self._put(uri)
 
     def get_upgrade(self, name, **kwargs):
@@ -159,7 +222,7 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        uri = '{0}/api/v0/cluster/{1}/upgrade'.format(self.endpoint, name)
+        uri = '/api/v0/cluster/{0}/upgrade'.format(name)
         return self._get(uri)
 
     def create_upgrade(self, name, **kwargs):
@@ -171,7 +234,7 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        uri = '{0}/api/v0/cluster/{1}/upgrade'.format(self.endpoint, name)
+        uri = '/api/v0/cluster/{0}/upgrade'.format(name)
         return self._put(uri, {'upgrade_to': kwargs['upgrade_to']})
 
     def list_clusters(self, **kwargs):
@@ -181,7 +244,7 @@ class Client(object):
         :param kwargs: Keyword arguments
         :type kwargs: dict
         """
-        uri = '{0}/api/v0/clusters'.format(self.endpoint)
+        uri = '/api/v0/clusters'
         return self._get(uri)
 
     def list_hosts(self, name, **kwargs):
@@ -194,13 +257,13 @@ class Client(object):
         :type kwargs: dict
         """
         if not name:
-            uri = '{0}/api/v0/hosts'.format(self.endpoint)
+            uri = '/api/v0/hosts'
             result = self._get(uri)
             if result:
                 result = [host['address'] for host in result]
             return result
         else:
-            uri = '{0}/api/v0/cluster/{1}/hosts'.format(self.endpoint, name)
+            uri = '/api/v0/cluster/{0}/hosts'.format(name)
             return self._get(uri)
 
 
@@ -281,6 +344,9 @@ def main():
             if 'password' not in conf.keys():
                 import getpass
                 conf['password'] = getpass.getpass()
+            if type(conf['endpoint']) is not list:
+                conf['endpoint'] = [conf['endpoint']]
+
     except IOError:  # pragma no cover
         parser.error(
             'Configuration file {0} could not be opened for reading'.format(
@@ -298,6 +364,11 @@ def main():
         print(yaml.dump(
             call_result, default_flow_style=False,
             Dumper=yaml.SafeDumper, explicit_end=False).strip())
+    except NoMoreServersError as nmse:
+        print("No servers could be reached. Tried: {0}.".format(
+            ", ".join(nmse.args)))
+        print("Exiting...")
+        raise SystemExit(1)
     except requests.exceptions.RequestException as re:
         parser.error(re)
     except ClientError as ce:

@@ -33,11 +33,17 @@ class TestClientScript(TestCase):
     """
 
     def setUp(self):
+        """
+        Runs before each test.
+        """
         self.conf = get_fixture_file_path('test/commissaire.json')
         self.argv = sys.argv
         sys.argv = ['']
 
     def tearDown(self):
+        """
+        Runs after each test.
+        """
         sys.argv = self.argv
 
     def test_client_script_get(self):
@@ -102,3 +108,24 @@ class TestClientScript(TestCase):
                 client_script.main()
                 self.assertEquals(1, _get.call_count)
                 _get.reset_mock()
+
+class TestMultiServerSession(TestCase):
+    """
+    Tests for the MultiServerSession class.
+    """
+
+    def test_request(self):
+        """
+        Verify requests attempt all servers provided.
+        """
+        with mock.patch('requests.Session.request') as _request:
+            _request.side_effect = (
+                requests.ConnectionError,
+                requests.ConnectionError)
+            mss = client_script.MultiServerSession(
+                ['http://127.0.0.1:8000', 'http://127.0.0.1:9000'])
+            self.assertRaises(
+                client_script.NoMoreServersError,
+                mss.get,
+                '/test')
+            self.assertEquals(2, _request.call_count)
