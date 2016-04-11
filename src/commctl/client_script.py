@@ -365,8 +365,9 @@ def main():
             call_result, default_flow_style=False,
             Dumper=yaml.SafeDumper, explicit_end=False).strip())
     except NoMoreServersError as nmse:
-        print("No servers could be reached. Tried: {0}.".format(
-            ", ".join(nmse.args)))
+        print("No servers could be reached. Tried the following:")
+        for server in nmse.args:
+            print("- {0}".format(server))
         print("Exiting...")
         raise SystemExit(1)
     except requests.exceptions.RequestException as re:
