@@ -87,6 +87,28 @@ class TestClientScript(TestCase):
                 self.assertEquals(1, _put.call_count)
                 _put.reset_mock()
 
+    def test_client_script_delete(self):
+        """
+        Verify use cases for the client_script delete command.
+        """
+        sys.argv = ['', 'delete']
+        with contextlib.nested(
+                mock.patch('requests.Session.delete'),
+                mock.patch('os.path.realpath')) as (_delete, _realpath):
+            _realpath.return_value = self.conf
+            # More cases to come...
+            for subcmd in (['cluster'],):
+                mock_return = requests.Response()
+                mock_return._content = '{}'
+                mock_return.status_code = 410
+                _delete.return_value = mock_return
+
+                sys.argv[2:] = subcmd + ['test']
+                print sys.argv
+                client_script.main()
+                self.assertEquals(1, _delete.call_count)
+                _delete.reset_mock()
+
     def test_client_script_list(self):
         """
         Verify use cases for the client_script list command.

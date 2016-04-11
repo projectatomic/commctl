@@ -166,6 +166,32 @@ class Client(object):
             'Unable to create an object at {0}: {1}'.format(
                 path, resp.status_code))
 
+    def _delete(self, path, data={}):
+        """
+        Shorthand for DELETEing.
+
+        :param path: Path to request.
+        :type path: str
+        :param data: Optional dictionary to jsonify and DELETE.
+        :type data: dict
+        :return: None on success, requests.Response on failure.
+        :rtype: None or requests.Response
+        """
+        resp = self._con.delete(path, data=json.dumps(data))
+        # XXX: Sometimes the server returns 410 for a successful
+        #      deletion, even though it's technically an error code.
+        #      Other times it returns 200.
+        if resp.status_code == 200 or resp.status_code == 410:
+            ret = resp.json()
+            if ret:
+                return ret
+            return ['Deleted']
+        if resp.status_code == 403:
+            raise ClientError('Username/Password was incorrect.')
+        raise ClientError(
+            'Unable to delete an object at {0}: {1}'.format(
+                path, resp.status_code))
+
     def get_cluster(self, name, **kwargs):
         """
         Attempts to get cluster information.
@@ -189,6 +215,18 @@ class Client(object):
         """
         path = '/api/v0/cluster/{0}'.format(name)
         return self._put(path)
+
+    def delete_cluster(self, name, **kwargs):
+        """
+        Attempts to delete a cluster.
+
+        :param name: The name of the cluster
+        :type name: str
+        :param kwargs: Any other keyword arguments
+        :type kwargs: dict
+        """
+        path = '/api/v0/cluster/{0}'.format(name)
+        return self._delete(path)
 
     def get_restart(self, name, **kwargs):
         """
@@ -331,6 +369,17 @@ def main():
     upgrade_parser.add_argument(
         '-u', '--upgrade-to', required=True,
         help='Version to upgrade to')
+
+    # Command: delete ...
+
+    delete_parser = sp.add_parser('delete')
+    delete_parser.required = True
+    delete_sp = delete_parser.add_subparsers(dest='sub_command')
+    delete_sp.required = True
+
+    cluster_parser = delete_sp.add_parser('cluster')
+    cluster_parser.required = True
+    cluster_parser.add_argument('name', help='Name of the cluster')
 
     # Command: list ...
 
