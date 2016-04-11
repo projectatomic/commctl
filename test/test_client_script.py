@@ -98,7 +98,7 @@ class TestClientScript(TestCase):
             _realpath.return_value = self.conf
             for subcmd, content in ((['clusters'], '[]'),
                                     (['hosts'], '[]'),
-                                    (['hosts', '-n', 'test'], '[]')):
+                                    (['hosts', 'test'], '[]')):
                 mock_return = requests.Response()
                 mock_return._content = content
                 mock_return.status_code = 200

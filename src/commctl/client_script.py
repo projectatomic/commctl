@@ -343,7 +343,8 @@ def main():
 
     hosts_parser = list_sp.add_parser('hosts')
     hosts_parser.add_argument(
-        '-n', '--name', help='Name of the cluster (omit to list all hosts)')
+        'name', nargs='?', default=None,
+        help='Name of the cluster (omit to list all hosts)')
 
     args = parser.parse_args()
 
