@@ -61,7 +61,7 @@ class TestClientScript(TestCase):
                 mock_return.status_code = 200
                 _get.return_value = mock_return
 
-                sys.argv[2:] = [subcmd, '-n test']
+                sys.argv[2:] = [subcmd, 'test']
                 client_script.main()
                 self.assertEquals(1, _get.call_count)
                 _get.reset_mock()
@@ -81,7 +81,7 @@ class TestClientScript(TestCase):
                 mock_return.status_code = 201
                 _put.return_value = mock_return
 
-                sys.argv[2:] = subcmd + ['-n test']
+                sys.argv[2:] = subcmd + ['test']
                 print sys.argv
                 client_script.main()
                 self.assertEquals(1, _put.call_count)

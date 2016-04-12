@@ -151,7 +151,7 @@ class Client(object):
         :type path: str
         :param data: Optional dictionary to jsonify and PUT.
         :type data: dict
-        :return: None on success, requests.Response of failure.
+        :return: None on success, requests.Response on failure.
         :rtype: None or requests.Response
         """
         resp = self._con.put(path, data=json.dumps(data))
@@ -175,7 +175,8 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        return self._get('/api/v0/cluster/{0}'.format(name))
+        path = '/api/v0/cluster/{0}'.format(name)
+        return self._get(path)
 
     def create_cluster(self, name, **kwargs):
         """
@@ -186,8 +187,8 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        uri = '/api/v0/cluster/{0}'.format(name)
-        return self._put(uri)
+        path = '/api/v0/cluster/{0}'.format(name)
+        return self._put(path)
 
     def get_restart(self, name, **kwargs):
         """
@@ -198,8 +199,8 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        uri = '/api/v0/cluster/{0}/restart'.format(name)
-        return self._get(uri)
+        path = '/api/v0/cluster/{0}/restart'.format(name)
+        return self._get(path)
 
     def create_restart(self, name, **kwargs):
         """
@@ -210,8 +211,8 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        uri = '/api/v0/cluster/{0}/restart'.format(name)
-        return self._put(uri)
+        path = '/api/v0/cluster/{0}/restart'.format(name)
+        return self._put(path)
 
     def get_upgrade(self, name, **kwargs):
         """
@@ -222,8 +223,8 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        uri = '/api/v0/cluster/{0}/upgrade'.format(name)
-        return self._get(uri)
+        path = '/api/v0/cluster/{0}/upgrade'.format(name)
+        return self._get(path)
 
     def create_upgrade(self, name, **kwargs):
         """
@@ -234,8 +235,8 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        uri = '/api/v0/cluster/{0}/upgrade'.format(name)
-        return self._put(uri, {'upgrade_to': kwargs['upgrade_to']})
+        path = '/api/v0/cluster/{0}/upgrade'.format(name)
+        return self._put(path, {'upgrade_to': kwargs['upgrade_to']})
 
     def list_clusters(self, **kwargs):
         """
@@ -244,8 +245,8 @@ class Client(object):
         :param kwargs: Keyword arguments
         :type kwargs: dict
         """
-        uri = '/api/v0/clusters'
-        return self._get(uri)
+        path = '/api/v0/clusters'
+        return self._get(path)
 
     def list_hosts(self, name, **kwargs):
         """
@@ -257,14 +258,14 @@ class Client(object):
         :type kwargs: dict
         """
         if not name:
-            uri = '/api/v0/hosts'
-            result = self._get(uri)
+            path = '/api/v0/hosts'
+            result = self._get(path)
             if result:
                 result = [host['address'] for host in result]
             return result
         else:
-            uri = '/api/v0/cluster/{0}/hosts'.format(name)
-            return self._get(uri)
+            path = '/api/v0/cluster/{0}/hosts'.format(name)
+            return self._get(path)
 
 
 def main():
@@ -280,13 +281,22 @@ def main():
             os.path.expanduser('~/.commissaire.json')),
         help='Full path to the configuration file.')
 
+    # FIXME: It's not clear whether setting required=True on subparsers is
+    #        really necessary.  Supposedly it's to work around some glitch
+    #        in Python 3, but a 2v3 comparison of argparse.py doesn't show
+    #        any relevant looking changes and the docs claim 'required' is
+    #        only meant for arguments.  Reinvestigate.
+
     # Create command structure
     sp = parser.add_subparsers(dest='main_command')
     sp.required = True
 
+    # Command: get ...
+
     get_parser = sp.add_parser('get')
     get_sp = get_parser.add_subparsers(dest='sub_command')
     get_sp.required = True
+
     cluster_parser = get_sp.add_parser('cluster')
     cluster_parser.required = True
     cluster_parser.add_argument('name', help='Name of the cluster')
@@ -298,6 +308,8 @@ def main():
     upgrade_parser = get_sp.add_parser('upgrade')
     upgrade_parser.required = True
     upgrade_parser.add_argument('name', help='Name of the cluster')
+
+    # Command: create ...
 
     create_parser = sp.add_parser('create')
     create_parser.required = True
@@ -315,17 +327,22 @@ def main():
     upgrade_parser = create_sp.add_parser('upgrade')
     upgrade_parser.required = True
     upgrade_parser.add_argument('name', help='Name of the cluster')
+    # XXX Should this be positional too since it's required?
     upgrade_parser.add_argument(
-        '-u', '--upgrade-to', help='Version to upgrade to')
+        '-u', '--upgrade-to', required=True,
+        help='Version to upgrade to')
+
+    # Command: list ...
 
     list_parser = sp.add_parser('list')
     list_sp = list_parser.add_subparsers(dest='sub_command')
     list_sp.required = True
+
     list_sp.add_parser('clusters')
     # No arguments for 'list clusters' at present.
 
-    list_hosts_parser = list_sp.add_parser('hosts')
-    list_hosts_parser.add_argument(
+    hosts_parser = list_sp.add_parser('hosts')
+    hosts_parser.add_argument(
         '-n', '--name', help='Name of the cluster (omit to list all hosts)')
 
     args = parser.parse_args()
