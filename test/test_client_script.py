@@ -55,7 +55,7 @@ class TestClientScript(TestCase):
                 mock.patch('requests.Session.get'),
                 mock.patch('os.path.realpath')) as (_get, _realpath):
             _realpath.return_value = self.conf
-            for subcmd in ('cluster', 'restart', 'upgrade'):
+            for subcmd in ('cluster', 'host', 'restart', 'upgrade'):
                 mock_return = requests.Response()
                 mock_return._content = '{}'
                 mock_return.status_code = 200
@@ -73,9 +73,17 @@ class TestClientScript(TestCase):
         sys.argv = ['', 'create']
         with contextlib.nested(
                 mock.patch('requests.Session.put'),
-                mock.patch('os.path.realpath')) as (_put, _realpath):
+                mock.patch('os.path.realpath'),
+                mock.patch('argparse.FileType.__call__',
+                           mock.mock_open(read_data='1234567890'),
+                           create=True)
+                ) as (_put, _realpath, _filetype):
             _realpath.return_value = self.conf
-            for subcmd in (['cluster'], ['restart'], ['upgrade', '-u', '1']):
+            for subcmd in (
+                    ['cluster'],
+                    ['host', '-c', 'honeynut', '1.2.3.4'],
+                    ['restart'],
+                    ['upgrade', '-u', '1']):
                 mock_return = requests.Response()
                 mock_return._content = '{}'
                 mock_return.status_code = 201
@@ -96,8 +104,7 @@ class TestClientScript(TestCase):
                 mock.patch('requests.Session.delete'),
                 mock.patch('os.path.realpath')) as (_delete, _realpath):
             _realpath.return_value = self.conf
-            # More cases to come...
-            for subcmd in (['cluster'],):
+            for subcmd in (['cluster'], ['host']):
                 mock_return = requests.Response()
                 mock_return._content = '{}'
                 mock_return.status_code = 410

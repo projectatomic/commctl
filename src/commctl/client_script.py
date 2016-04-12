@@ -19,6 +19,7 @@ Client CLI for commissaire.
 """
 
 import argparse
+import base64
 import json
 import os.path
 import platform
@@ -228,6 +229,48 @@ class Client(object):
         path = '/api/v0/cluster/{0}'.format(name)
         return self._delete(path)
 
+    def get_host(self, address, **kwargs):
+        """
+        Attempts to get host information.
+
+        :param address: The IP address of the host
+        :type address: str
+        :param kwargs: Any other keyword arguments
+        :type kwargs: dict
+        """
+        path = '/api/v0/host/{0}'.format(address)
+        return self._get(path)
+
+    def create_host(self, address, **kwargs):
+        """
+        Attempts to create a host.
+
+        :param address: The IP address of the host
+        :type address: str
+        :param kwargs: Any other keyword arguments
+        :type kwargs: dict
+        """
+        path = '/api/v0/host/{0}'.format(address)
+        data = {}
+        infile = kwargs['ssh-priv-key']
+        b64_bytes = base64.b64encode(infile.read())
+        data['ssh_priv_key'] = b64_bytes.decode()
+        if 'cluster' in kwargs:
+            data['cluster'] = kwargs['cluster']
+        return self._put(path, data)
+
+    def delete_host(self, address, **kwargs):
+        """
+        Attempts to delete a host.
+
+        :param address: The IP address of the host
+        :type address: str
+        :param kwargs: Any other keyword arguments
+        :type kwargs: dict
+        """
+        path = '/api/v0/host/{0}'.format(address)
+        return self._delete(path)
+
     def get_restart(self, name, **kwargs):
         """
         Attempts to get a cluster restart.
@@ -339,6 +382,10 @@ def main():
     cluster_parser.required = True
     cluster_parser.add_argument('name', help='Name of the cluster')
 
+    host_parser = get_sp.add_parser('host')
+    host_parser.required = True
+    host_parser.add_argument('address', help='IP address of the host')
+
     restart_parser = get_sp.add_parser('restart')
     restart_parser.required = True
     restart_parser.add_argument('name', help='Name of the cluster')
@@ -357,6 +404,15 @@ def main():
     cluster_parser = create_sp.add_parser('cluster')
     cluster_parser.required = True
     cluster_parser.add_argument('name', help='Name of the cluster')
+
+    host_parser = create_sp.add_parser('host')
+    host_parser.required = True
+    host_parser.add_argument('address', help='IP address of the host')
+    host_parser.add_argument(
+        'ssh-priv-key', type=argparse.FileType('rb'),
+        help='SSH private key file (or "-" for stdin)')
+    host_parser.add_argument(
+        '-c', '--cluster', help='Add host to the cluster named CLUSTER')
 
     restart_parser = create_sp.add_parser('restart')
     restart_parser.required = True
@@ -380,6 +436,10 @@ def main():
     cluster_parser = delete_sp.add_parser('cluster')
     cluster_parser.required = True
     cluster_parser.add_argument('name', help='Name of the cluster')
+
+    host_parser = delete_sp.add_parser('host')
+    host_parser.required = True
+    host_parser.add_argument('address', help='IP address of the host')
 
     # Command: list ...
 
