@@ -17,11 +17,16 @@
 Test cases for the commctl.client_script script.
 """
 
+import os
 import sys
 
 import contextlib
 import mock
 import requests
+import bcrypt
+import tempfile
+
+from StringIO import StringIO
 
 from . import TestCase, get_fixture_file_path
 from commctl import client_script
@@ -137,6 +142,64 @@ class TestClientScript(TestCase):
                 client_script.main()
                 self.assertEquals(1, _get.call_count)
                 _get.reset_mock()
+
+    def test_client_script_passhash_with_password(self):
+        """
+        Verify passhash works via --password
+        """
+        sys.argv = ['', 'create', 'passhash', '--password', 'mypass']
+        with contextlib.nested(
+                mock.patch('sys.stdout', new_callable=StringIO),
+                mock.patch('os.path.realpath')) as (_out, _realpath):
+            _realpath.return_value = self.conf
+            client_script.main()
+            hashed = _out.getvalue().strip()
+            self.assertEquals(bcrypt.hashpw('mypass', hashed), hashed)
+
+    def test_client_script_passhash_with_file(self):
+        """
+        Verify passhash works via --file
+        """
+        with open('pwdfile', 'w') as f:
+            f.write("mypass");
+        sys.argv = ['', 'create', 'passhash', '--file', 'pwdfile']
+        with contextlib.nested(
+                mock.patch('sys.stdout', new_callable=StringIO),
+                mock.patch('os.path.realpath')) as (_out, _realpath):
+            _realpath.return_value = self.conf
+            client_script.main()
+            os.remove('pwdfile')
+            hashed = _out.getvalue().strip()
+            self.assertEquals(bcrypt.hashpw('mypass', hashed), hashed)
+
+    def test_client_script_passhash_with_stdin(self):
+        """
+        Verify passhash works via stdin
+        """
+        sys.argv = ['', 'create', 'passhash', '--file', '-']
+        with contextlib.nested(
+                mock.patch('sys.stdout', new_callable=StringIO),
+                mock.patch('sys.stdin', StringIO("mypass")),
+                mock.patch('os.path.realpath')) as (_out, _in, _realpath):
+            _realpath.return_value = self.conf
+            client_script.main()
+            hashed = _out.getvalue().strip()
+            self.assertEquals(bcrypt.hashpw('mypass', hashed), hashed)
+
+    def test_client_script_passhash_with_prompt(self):
+        """
+        Verify passhash works via getpass prompt
+        """
+        sys.argv = ['', 'create', 'passhash']
+        with contextlib.nested(
+                mock.patch('sys.stdout', new_callable=StringIO),
+                mock.patch('getpass.getpass'),
+                mock.patch('os.path.realpath')) as (_out, _gp, _realpath):
+            _realpath.return_value = self.conf
+            _gp.return_value = 'mypass'
+            client_script.main()
+            hashed = _out.getvalue().strip()
+            self.assertEquals(bcrypt.hashpw('mypass', hashed), hashed)
 
 class TestMultiServerSession(TestCase):
     """
