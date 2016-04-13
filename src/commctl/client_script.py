@@ -255,7 +255,7 @@ class Client(object):
         infile = kwargs['ssh-priv-key']
         b64_bytes = base64.b64encode(infile.read())
         data['ssh_priv_key'] = b64_bytes.decode()
-        if 'cluster' in kwargs:
+        if kwargs['cluster'] is not None:
             data['cluster'] = kwargs['cluster']
         return self._put(path, data)
 
@@ -318,6 +318,20 @@ class Client(object):
         """
         path = '/api/v0/cluster/{0}/upgrade'.format(name)
         return self._put(path, {'upgrade_to': kwargs['upgrade_to']})
+
+    def create_passhash(self, **kwargs):
+        """
+        Uses bcrypt to hash a password.
+        """
+        import bcrypt
+        if kwargs['password'] is not None:
+            pw = kwargs['password']
+        elif kwargs['file'] is not None:
+            pw = kwargs['file'].read()
+        else:
+            import getpass
+            pw = getpass.getpass()
+        return bcrypt.hashpw(pw, bcrypt.gensalt(log_rounds=kwargs['rounds']))
 
     def list_clusters(self, **kwargs):
         """
@@ -426,6 +440,16 @@ def main():
         '-u', '--upgrade-to', required=True,
         help='Version to upgrade to')
 
+    passhash_parser = create_sp.add_parser('passhash')
+    passhash_parser.required = True
+    passhash_parser.add_argument(
+        '-p', '--password', help='Password to hash')
+    passhash_parser.add_argument(
+        '-f', '--file', type=argparse.FileType('rb'),
+        help='Password file to hash (or "-" for stdin)')
+    passhash_parser.add_argument(
+        '-r', '--rounds', type=int, default=12, help='Number of rounds')
+
     # Command: delete ...
 
     delete_parser = sp.add_parser('delete')
@@ -488,9 +512,12 @@ def main():
     try:
         call_result = getattr(client, '{0}_{1}'.format(
             args.main_command, args.sub_command))(**args.__dict__)
-        print(yaml.dump(
-            call_result, default_flow_style=False,
-            Dumper=yaml.SafeDumper, explicit_end=False).strip())
+        if type(call_result) is dict:
+            print(yaml.dump(
+                call_result, default_flow_style=False,
+                Dumper=yaml.SafeDumper, explicit_end=False).strip())
+        else:
+            print call_result
     except NoMoreServersError as nmse:
         print("No servers could be reached. Tried the following:")
         for server in nmse.args:

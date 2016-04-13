@@ -56,7 +56,6 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'commissaire-hashpass = commctl.hash_pass_script:main',
             'commctl = commctl.client_script:main',
         ],
     }
