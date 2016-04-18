@@ -22,6 +22,7 @@ from __future__ import print_function
 
 import argparse
 import base64
+import errno
 import json
 import os
 import os.path
@@ -413,27 +414,31 @@ class Dispatcher(object):
         try:
             with open(filename) as cf:
                 conf = json.load(cf)
-                for required in ('username', 'endpoint'):
-                    if required not in conf.keys():
-                        conf[required] = input(
-                            '{0}: '.format(required.capitalize()))
-
-                # Check password on it's own
-                if 'password' not in conf.keys():
-                    import getpass
-                    conf['password'] = getpass.getpass()
-                if type(conf['endpoint']) is not list:
-                    conf['endpoint'] = [conf['endpoint']]
-
-        except IOError:  # pragma no cover
-            self.argument_parser.error(
-                'Configuration file {0} could not be opened '
-                'for reading'.format(self._args.config))
+        except IOError as ex:  # pragma no cover
+            # If file not found, prompt.
+            if ex.errno != errno.ENOENT:
+                self.argument_parser.error(
+                    'Configuration file {0} could not be opened '
+                    'for reading'.format(self._args.config))
         except ValueError:  # pragma no cover
             self.argument_parser.error((
                 'Unable to parse configuration file. HINT: Make sure to '
                 'use only double quotes and the last item should not end '
                 'with a comma.'))
+
+        # Prompt for any missing configuration.
+
+        for required in ('username', 'endpoint'):
+            if required not in conf.keys():
+                conf[required] = input(
+                    '{0}: '.format(required.capitalize()))
+
+        # Check password on it's own
+        if 'password' not in conf.keys():
+            import getpass
+            conf['password'] = getpass.getpass()
+        if type(conf['endpoint']) is not list:
+            conf['endpoint'] = [conf['endpoint']]
 
         client = Client(conf)
 
