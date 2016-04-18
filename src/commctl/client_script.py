@@ -27,7 +27,7 @@ import platform
 import requests
 
 # If we are on Python 2.x use raw_input as input
-if platform.python_version_tuple()[0] == 2:
+if platform.python_version_tuple()[0] == '2':
     input = raw_input
 
 
