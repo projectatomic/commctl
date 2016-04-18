@@ -54,6 +54,7 @@ setup(
     package_data={
         '': ['data/ansible/playbooks/*', 'data/templates/*'],
     },
+    py_modules=['src/commctl/cli'],
     entry_points={
         'console_scripts': [
             'commctl = commctl.client_script:main',

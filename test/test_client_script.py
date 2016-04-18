@@ -29,7 +29,7 @@ import tempfile
 from StringIO import StringIO
 
 from . import TestCase, get_fixture_file_path
-from commctl import client_script
+from commctl import client_script, cli
 
 
 class TestClientScript(TestCase):
@@ -214,10 +214,10 @@ class TestMultiServerSession(TestCase):
             _request.side_effect = (
                 requests.ConnectionError,
                 requests.ConnectionError)
-            mss = client_script.MultiServerSession(
+            mss = cli.MultiServerSession(
                 ['http://127.0.0.1:8000', 'http://127.0.0.1:9000'])
             self.assertRaises(
-                client_script.NoMoreServersError,
+                cli.NoMoreServersError,
                 mss.get,
                 '/test')
             self.assertEquals(2, _request.call_count)
