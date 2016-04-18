@@ -179,10 +179,7 @@ class Client(object):
         :rtype: None or requests.Response
         """
         resp = self._con.delete(path, data=json.dumps(data))
-        # XXX: Sometimes the server returns 410 for a successful
-        #      deletion, even though it's technically an error code.
-        #      Other times it returns 200.
-        if resp.status_code == 200 or resp.status_code == 410:
+        if resp.status_code == 200:
             ret = resp.json()
             if ret:
                 return ret

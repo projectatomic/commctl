@@ -112,7 +112,7 @@ class TestClientScript(TestCase):
             for subcmd in (['cluster'], ['host']):
                 mock_return = requests.Response()
                 mock_return._content = '{}'
-                mock_return.status_code = 410
+                mock_return.status_code = 200
                 _delete.return_value = mock_return
 
                 sys.argv[2:] = subcmd + ['test']
