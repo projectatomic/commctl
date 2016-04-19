@@ -449,11 +449,16 @@ class Dispatcher(object):
                 self._args.main_command, self._args.sub_command)
             bound_method = getattr(client, method_name)
             call_result = bound_method(**self._args.__dict__)
-            output_data = yaml.dump(
-                call_result,
-                default_flow_style=False,
-                Dumper=yaml.SafeDumper,
-                explicit_end=False)
+            # XXX Don't dump literals.  yaml.dump() appends an
+            #     ugly-looking end-of-document marker (\n...).
+            if hasattr(call_result, '__iter__'):
+                output_data = yaml.dump(
+                    call_result,
+                    default_flow_style=False,
+                    Dumper=yaml.SafeDumper,
+                    explicit_end=False)
+            else:
+                output_data = str(call_result)
             print(output_data.strip())
         except NoMoreServersError as nmse:
             print("No servers could be reached. Tried the following:")
