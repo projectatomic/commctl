@@ -1,6 +1,6 @@
 Name:           commissaire-client
-Version:        0.0.1rc2
-Release:        6%{?dist}
+Version:        0.0.1rc3
+Release:        1%{?dist}
 Summary:        CLI for Commissaire
 License:        LGPLv2+
 URL:            http://github.com/projectatomic/commctl
@@ -48,8 +48,11 @@ Command line tools for Commissaire.
 
 
 %changelog
+* Wed Apr 20 2016 Matthew Barnes <mbarnes@redhat.com> - 0.0.1rc3-1
+- Update for RC3.
+
 * Wed Apr 20 2016 Matthew Barnes <mbarnes@redhat.com> - 0.0.1rc2-6
-* commissaire-hashpass is now 'commctl create passhash'.
+- commissaire-hashpass is now 'commctl create passhash'.
 
 * Mon Apr  4 2016 Steve Milner <smilner@redhat.com> - 0.0.1rc2-5
-* commctl and commissaire-hash-pass are now their own package.
+- commctl and commissaire-hash-pass are now their own package.
