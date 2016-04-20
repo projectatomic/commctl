@@ -1,4 +1,4 @@
-Name:           commissaire-cli
+Name:           commissaire-client
 Version:        0.0.1rc2
 Release:        6%{?dist}
 Summary:        CLI for Commissaire
