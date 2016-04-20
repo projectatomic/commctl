@@ -40,7 +40,7 @@ test_require = extract_requirements('test-requirements.txt')
 
 setup(
     name='commctl',
-    version='0.0.1rc2',
+    version='0.0.1rc3',
     description='CLI for Commissaire',
     author=extract_names('CONTRIBUTORS'),
     maintainer=extract_names('MAINTAINERS'),
