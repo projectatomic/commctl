@@ -86,17 +86,13 @@ class TestClientScript(TestCase):
             _realpath.return_value = self.conf
             for subcmd in (
                     ['cluster'],
-                    ['host', '-c', 'honeynut', '1.2.3.4'],
-                    ['restart'],
-                    ['upgrade']):
+                    ['host', '-c', 'honeynut', '1.2.3.4']):
                 mock_return = requests.Response()
                 mock_return._content = '{}'
                 mock_return.status_code = 201
                 _put.return_value = mock_return
 
                 sys.argv[2:] = subcmd + ['test']
-                if subcmd[0] == 'upgrade':
-                    sys.argv.append('1')  # arbitrary version
                 print sys.argv
                 client_script.main()
                 self.assertEquals(1, _put.call_count)
@@ -144,6 +140,30 @@ class TestClientScript(TestCase):
                 client_script.main()
                 self.assertEquals(1, _get.call_count)
                 _get.reset_mock()
+
+    def test_client_script_start(self):
+        """
+        Verify use cases for the client_script start command.
+        """
+        sys.argv = ['', 'start']
+        with contextlib.nested(
+                mock.patch('requests.Session.put'),
+                mock.patch('os.path.realpath')
+                ) as (_put, _realpath):
+            _realpath.return_value = self.conf
+            for subcmd in (['restart'], ['upgrade']):
+                mock_return = requests.Response()
+                mock_return._content = '{}'
+                mock_return.status_code = 201
+                _put.return_value = mock_return
+
+                sys.argv[2:] = subcmd + ['test']
+                if subcmd[0] == 'upgrade':
+                    sys.argv.append('1')  # arbitrary version
+                print sys.argv
+                client_script.main()
+                self.assertEquals(1, _put.call_count)
+                _put.reset_mock()
 
     def test_client_script_passhash_with_password(self):
         """
