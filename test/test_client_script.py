@@ -88,13 +88,15 @@ class TestClientScript(TestCase):
                     ['cluster'],
                     ['host', '-c', 'honeynut', '1.2.3.4'],
                     ['restart'],
-                    ['upgrade', '-u', '1']):
+                    ['upgrade']):
                 mock_return = requests.Response()
                 mock_return._content = '{}'
                 mock_return.status_code = 201
                 _put.return_value = mock_return
 
                 sys.argv[2:] = subcmd + ['test']
+                if subcmd[0] == 'upgrade':
+                    sys.argv.append('1')  # arbitrary version
                 print sys.argv
                 client_script.main()
                 self.assertEquals(1, _put.call_count)
