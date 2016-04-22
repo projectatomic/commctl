@@ -313,7 +313,7 @@ class Client(object):
         path = '/api/v0/cluster/{0}/upgrade'.format(name)
         return self._get(path)
 
-    def create_upgrade(self, name, **kwargs):
+    def create_upgrade(self, name, version, **kwargs):
         """
         Attempts to create a cluster upgrade.
 
@@ -323,7 +323,7 @@ class Client(object):
         :type kwargs: dict
         """
         path = '/api/v0/cluster/{0}/upgrade'.format(name)
-        return self._put(path, {'upgrade_to': kwargs['upgrade_to']})
+        return self._put(path, {'upgrade_to': version})
 
     def create_passhash(self, **kwargs):
         """
@@ -561,10 +561,7 @@ def add_subparsers(argument_parser):
     upgrade_parser = create_sp.add_parser('upgrade')
     upgrade_parser.required = True
     upgrade_parser.add_argument('name', help='Name of the cluster')
-    # XXX Should this be positional too since it's required?
-    upgrade_parser.add_argument(
-        '-u', '--upgrade-to', required=True,
-        help='Version to upgrade to')
+    upgrade_parser.add_argument('version', help='Version to upgrade to')
 
     passhash_parser = create_sp.add_parser('passhash')
     passhash_parser.required = True
