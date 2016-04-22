@@ -289,9 +289,9 @@ class Client(object):
         path = '/api/v0/cluster/{0}/restart'.format(name)
         return self._get(path)
 
-    def create_restart(self, name, **kwargs):
+    def start_restart(self, name, **kwargs):
         """
-        Attempts to create a cluster restart.
+        Attempts to initiate a cluster restart.
 
         :param name: The name of the cluster
         :type name: str
@@ -313,9 +313,9 @@ class Client(object):
         path = '/api/v0/cluster/{0}/upgrade'.format(name)
         return self._get(path)
 
-    def create_upgrade(self, name, version, **kwargs):
+    def start_upgrade(self, name, version, **kwargs):
         """
-        Attempts to create a cluster upgrade.
+        Attempts to initiate a cluster upgrade.
 
         :param name: The name of the cluster
         :type name: str
@@ -554,15 +554,6 @@ def add_subparsers(argument_parser):
     host_parser.add_argument(
         '-c', '--cluster', help='Add host to the cluster named CLUSTER')
 
-    restart_parser = create_sp.add_parser('restart')
-    restart_parser.required = True
-    restart_parser.add_argument('name', help='Name of the cluster')
-
-    upgrade_parser = create_sp.add_parser('upgrade')
-    upgrade_parser.required = True
-    upgrade_parser.add_argument('name', help='Name of the cluster')
-    upgrade_parser.add_argument('version', help='Version to upgrade to')
-
     passhash_parser = create_sp.add_parser('passhash')
     passhash_parser.required = True
     passhash_parser.add_argument(
@@ -601,3 +592,18 @@ def add_subparsers(argument_parser):
     hosts_parser.add_argument(
         'name', nargs='?', default=None,
         help='Name of the cluster (omit to list all hosts)')
+
+    # Command: start ...
+
+    start_parser = sp.add_parser('start')
+    start_sp = start_parser.add_subparsers(dest='sub_command')
+    start_sp.required = True
+
+    restart_parser = start_sp.add_parser('restart')
+    restart_parser.required = True
+    restart_parser.add_argument('name', help='Name of the cluster')
+
+    upgrade_parser = start_sp.add_parser('upgrade')
+    upgrade_parser.required = True
+    upgrade_parser.add_argument('name', help='Name of the cluster')
+    upgrade_parser.add_argument('version', help='Version to upgrade to')
