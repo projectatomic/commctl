@@ -199,7 +199,7 @@ class Client(object):
             'Unable to delete an object at {0}: {1}'.format(
                 path, resp.status_code))
 
-    def get_cluster(self, name, **kwargs):
+    def cluster_get(self, name, **kwargs):
         """
         Attempts to get cluster information.
 
@@ -211,7 +211,7 @@ class Client(object):
         path = '/api/v0/cluster/{0}'.format(name)
         return self._get(path)
 
-    def create_cluster(self, name, **kwargs):
+    def cluster_create(self, name, **kwargs):
         """
         Attempts to create a cluster.
 
@@ -223,7 +223,7 @@ class Client(object):
         path = '/api/v0/cluster/{0}'.format(name)
         return self._put(path)
 
-    def delete_cluster(self, name, **kwargs):
+    def cluster_delete(self, name, **kwargs):
         """
         Attempts to delete a cluster.
 
@@ -235,7 +235,7 @@ class Client(object):
         path = '/api/v0/cluster/{0}'.format(name)
         return self._delete(path)
 
-    def get_host(self, address, **kwargs):
+    def host_get(self, address, **kwargs):
         """
         Attempts to get host information.
 
@@ -247,7 +247,7 @@ class Client(object):
         path = '/api/v0/host/{0}'.format(address)
         return self._get(path)
 
-    def create_host(self, address, **kwargs):
+    def host_create(self, address, **kwargs):
         """
         Attempts to create a host.
 
@@ -265,7 +265,7 @@ class Client(object):
             data['cluster'] = kwargs['cluster']
         return self._put(path, data)
 
-    def delete_host(self, address, **kwargs):
+    def host_delete(self, address, **kwargs):
         """
         Attempts to delete a host.
 
@@ -277,9 +277,9 @@ class Client(object):
         path = '/api/v0/host/{0}'.format(address)
         return self._delete(path)
 
-    def get_restart(self, name, **kwargs):
+    def cluster_restart_status(self, name, **kwargs):
         """
-        Attempts to get a cluster restart.
+        Attempts to get the status of an ongoing cluster restart.
 
         :param name: The name of the cluster
         :type name: str
@@ -289,7 +289,7 @@ class Client(object):
         path = '/api/v0/cluster/{0}/restart'.format(name)
         return self._get(path)
 
-    def start_restart(self, name, **kwargs):
+    def cluster_restart_start(self, name, **kwargs):
         """
         Attempts to initiate a cluster restart.
 
@@ -301,9 +301,9 @@ class Client(object):
         path = '/api/v0/cluster/{0}/restart'.format(name)
         return self._put(path)
 
-    def get_upgrade(self, name, **kwargs):
+    def cluster_upgrade_status(self, name, **kwargs):
         """
-        Attempts to retrieve a cluster upgrade.
+        Attempts to get the status of an ongoing cluster upgrade.
 
         :param name: The name of the cluster
         :type name: str
@@ -313,7 +313,7 @@ class Client(object):
         path = '/api/v0/cluster/{0}/upgrade'.format(name)
         return self._get(path)
 
-    def start_upgrade(self, name, version, **kwargs):
+    def cluster_upgrade_start(self, name, version, **kwargs):
         """
         Attempts to initiate a cluster upgrade.
 
@@ -325,21 +325,7 @@ class Client(object):
         path = '/api/v0/cluster/{0}/upgrade'.format(name)
         return self._put(path, {'upgrade_to': version})
 
-    def create_passhash(self, **kwargs):
-        """
-        Uses bcrypt to hash a password.
-        """
-        import bcrypt
-        if kwargs['password'] is not None:
-            pw = kwargs['password']
-        elif kwargs['file'] is not None:
-            pw = kwargs['file'].read()
-        else:
-            import getpass
-            pw = getpass.getpass()
-        return bcrypt.hashpw(pw, bcrypt.gensalt(log_rounds=kwargs['rounds']))
-
-    def list_clusters(self, **kwargs):
+    def cluster_list(self, **kwargs):
         """
         Attempts to list available clusters.
 
@@ -349,7 +335,7 @@ class Client(object):
         path = '/api/v0/clusters'
         return self._get(path)
 
-    def list_hosts(self, name, **kwargs):
+    def host_list(self, name, **kwargs):
         """
         Attempts to list all hosts or hosts in particular cluster.
 
@@ -380,9 +366,6 @@ class Dispatcher(object):
     # This is overridden by subclasses.
     argument_parser = None
 
-    # For atomic: allow non-root users to run these commands.
-    requires_root = False
-
     def __init__(self):
         self._args = None
 
@@ -396,10 +379,13 @@ class Dispatcher(object):
         """
         self._args = args
 
-    def dispatch(self):
+    def _dispatch(self, client_method):
         """
         Dispatches a single command, and also handles session setup and
         some types of errors.  The set_args() method MUST be called first.
+
+        :param client_method: Method name to invoke on the Client instance
+        :type client_method: str
         """
 
         assert(type(self._args) is argparse.Namespace)
@@ -445,12 +431,10 @@ class Dispatcher(object):
 
         client = Client(conf)
 
-        # Dispatch the command+subcommand.
+        # Dispatch the appropriate method for the command.
 
         try:
-            method_name = '{0}_{1}'.format(
-                self._args.main_command, self._args.sub_command)
-            bound_method = getattr(client, method_name)
+            bound_method = getattr(client, client_method)
             call_result = bound_method(**self._args.__dict__)
             # XXX Don't dump literals.  yaml.dump() appends an
             #     ugly-looking end-of-document marker (\n...).
@@ -474,36 +458,66 @@ class Dispatcher(object):
         except ClientError as ce:
             self.argument_parser.error(ce)
 
+    def dispatch_cluster_command(self):
+        """
+        Dispatching callback for cluster commands.
+        """
+        client_method = 'cluster_' + self._args.command
+        if hasattr(self._args, 'subcommand'):
+            client_method += '_' + self._args.subcommand
+        self._dispatch(client_method)
 
-def add_subparsers(argument_parser):
+    def dispatch_host_command(self):
+        """
+        Dispatching callback for host commands.
+        """
+        client_method = 'host_' + self._args.command
+        self._dispatch(client_method)
+
+
+def _configure_parser(argument_parser, method_name):
     """
-    Augments the given argparse.ArgumentParser with subparsers for the
-    Commissaire command-line interface.
+    Configures a Dispatcher subclass for the argument parser.
 
-    :param argument_parser: The argument parser to augment
-    :type argument_parser: argparse.ArgumentParser
+    We have to conform with how atomic handles arguments:
+
+      args = parser.parse_args()
+      _class = args._class()
+      _class.set_args(args)
+      _func = getattr(_class, args.func)
+      sys.exit(_func())
+
+    Note, this is the only chance we get to stash the ArgumentParser
+    which we'd like to keep for use in error handling later.  But we
+    have to stash it in a Dispatcher CLASS definition because of the
+    atomic logic above.  So this next part defines a unique subclass
+    with the parser instance stored as a class variable.  Weird, but
+    it works around the limitation.
+
+    :param argument_parser: The argument parser to configure
+    :type argument_parser: argparser.ArgumentParser
+    :param method_name: The Dispatcher method to call
+    :type method_name: str
     """
-
-    # We have to conform with how atomic handles arguments:
-    #
-    #   args = parser.parse_args()
-    #   _class = args._class()
-    #   _class.set_args(args)
-    #   _func = getattr(_class, args.func)
-    #   sys.exit(_func())
-    #
-    # Note, this is the only chance we get to stash the ArgumentParser
-    # which we'd like to keep for use in error handling later.  But we
-    # have to stash it in a Dispatcher CLASS definition because of the
-    # atomic logic above.  So this next part defines a unique subclass
-    # with the parser instance stored as a class variable.  Weird, but
-    # it works around the limitation.
-
     class_name = 'Dispatcher_' + str(id(argument_parser))
     class_defs = {'argument_parser': argument_parser}
     subclass = type(class_name, (Dispatcher,), class_defs)
+    argument_parser.set_defaults(_class=subclass, func=method_name)
 
-    argument_parser.set_defaults(_class=subclass, func='dispatch')
+
+def add_cluster_commands(argument_parser):
+    """
+    Augments the argument parser with "cluster" subcommands.
+
+    :param argument_parser: The argument parser to augment
+    :type argument_parser: argparser.ArgumentParser
+    """
+    _configure_parser(argument_parser, 'dispatch_cluster_command')
+
+    # Note, commands follow a "subject-verb" or "subject-object-verb"
+    # pattern.  e.g. "host create" or "cluster upgrade start"
+
+    subject_subparser = argument_parser.add_subparsers(dest='command')
 
     # FIXME: It's not clear whether setting required=True on subparsers is
     #        really necessary.  Supposedly it's to work around some glitch
@@ -511,102 +525,101 @@ def add_subparsers(argument_parser):
     #        any relevant looking changes and the docs claim 'required' is
     #        only meant for arguments.  Reinvestigate.
 
-    # Create command structure
-    sp = argument_parser.add_subparsers(dest='main_command')
-    sp.required = True
+    # Sub-command: cluster create
+    verb_parser = subject_subparser.add_parser('create')
+    verb_parser.required = True
+    verb_parser.add_argument('name', help='Name of the cluster')
 
-    # Command: get ...
+    # Sub-command: cluster delete
+    verb_parser = subject_subparser.add_parser('delete')
+    verb_parser.required = True
+    verb_parser.add_argument('name', help='Name of the cluster')
 
-    get_parser = sp.add_parser('get')
-    get_sp = get_parser.add_subparsers(dest='sub_command')
-    get_sp.required = True
+    # Sub-command: cluster get
+    verb_parser = subject_subparser.add_parser('get')
+    verb_parser.required = True
+    verb_parser.add_argument('name', help='Name of the cluster')
 
-    cluster_parser = get_sp.add_parser('cluster')
-    cluster_parser.required = True
-    cluster_parser.add_argument('name', help='Name of the cluster')
+    # Sub-command: cluster list
+    subject_subparser.add_parser('list')
+    # No arguments for 'cluster list' at present.
 
-    host_parser = get_sp.add_parser('host')
-    host_parser.required = True
-    host_parser.add_argument('address', help='IP address of the host')
+    # Command: cluster restart ...
 
-    restart_parser = get_sp.add_parser('restart')
+    object_parser = subject_subparser.add_parser('restart')
+    object_subparser = object_parser.add_subparsers(dest='subcommand')
+    object_subparser.required = True
+
+    # Sub-command: cluster restart start
+    restart_parser = object_subparser.add_parser('start')
     restart_parser.required = True
     restart_parser.add_argument('name', help='Name of the cluster')
 
-    upgrade_parser = get_sp.add_parser('upgrade')
-    upgrade_parser.required = True
-    upgrade_parser.add_argument('name', help='Name of the cluster')
+    # Sub-command: cluster restart status
+    verb_parser = object_subparser.add_parser('status')
+    verb_parser.required = True
+    verb_parser.add_argument('name', help='Name of the cluster')
 
-    # Command: create ...
+    # Command: cluster upgrade ...
 
-    create_parser = sp.add_parser('create')
-    create_parser.required = True
-    create_sp = create_parser.add_subparsers(dest='sub_command')
-    create_sp.required = True
+    object_parser = subject_subparser.add_parser('upgrade')
+    object_subparser = object_parser.add_subparsers(dest='subcommand')
+    object_subparser.required = True
 
-    cluster_parser = create_sp.add_parser('cluster')
-    cluster_parser.required = True
-    cluster_parser.add_argument('name', help='Name of the cluster')
+    # Sub-command: cluster upgrade start
+    verb_parser = object_subparser.add_parser('start')
+    verb_parser.required = True
+    verb_parser.add_argument('name', help='Name of the cluster')
+    verb_parser.add_argument('version', help='Version to upgrade to')
 
-    host_parser = create_sp.add_parser('host')
-    host_parser.required = True
-    host_parser.add_argument('address', help='IP address of the host')
-    host_parser.add_argument(
+    # Sub-command: cluster upgrade status
+    verb_parser = object_subparser.add_parser('status')
+    verb_parser.required = True
+    verb_parser.add_argument('name', help='Name of the cluster')
+
+
+def add_host_commands(argument_parser):
+    """
+    Augments the argument parser with "host" subcommands.
+
+    :param argument_parser: The argument parser to augment
+    :type argument_parser: argparser.ArgumentParser
+    """
+    _configure_parser(argument_parser, 'dispatch_host_command')
+
+    # Note, commands follow a "subject-verb" or "subject-object-verb"
+    # pattern.  e.g. "host create" or "cluster upgrade start"
+
+    subject_subparser = argument_parser.add_subparsers(dest='command')
+
+    # FIXME: It's not clear whether setting required=True on subparsers is
+    #        really necessary.  Supposedly it's to work around some glitch
+    #        in Python 3, but a 2v3 comparison of argparse.py doesn't show
+    #        any relevant looking changes and the docs claim 'required' is
+    #        only meant for arguments.  Reinvestigate.
+
+    # Sub-command: host create
+    verb_parser = subject_subparser.add_parser('create')
+    verb_parser.required = True
+    verb_parser.add_argument('address', help='IP address of the host')
+    verb_parser.add_argument(
         'ssh-priv-key', type=argparse.FileType('rb'),
         help='SSH private key file (or "-" for stdin)')
-    host_parser.add_argument(
+    verb_parser.add_argument(
         '-c', '--cluster', help='Add host to the cluster named CLUSTER')
 
-    passhash_parser = create_sp.add_parser('passhash')
-    passhash_parser.required = True
-    passhash_parser.add_argument(
-        '-p', '--password', help='Password to hash')
-    passhash_parser.add_argument(
-        '-f', '--file', type=argparse.FileType('rb'),
-        help='Password file to hash (or "-" for stdin)')
-    passhash_parser.add_argument(
-        '-r', '--rounds', type=int, default=12, help='Number of rounds')
+    # Sub-command: host delete
+    verb_parser = subject_subparser.add_parser('delete')
+    verb_parser.required = True
+    verb_parser.add_argument('address', help='IP address of the host')
 
-    # Command: delete ...
+    # Sub-command: host get
+    verb_parser = subject_subparser.add_parser('get')
+    verb_parser.required = True
+    verb_parser.add_argument('address', help='IP address of the host')
 
-    delete_parser = sp.add_parser('delete')
-    delete_parser.required = True
-    delete_sp = delete_parser.add_subparsers(dest='sub_command')
-    delete_sp.required = True
-
-    cluster_parser = delete_sp.add_parser('cluster')
-    cluster_parser.required = True
-    cluster_parser.add_argument('name', help='Name of the cluster')
-
-    host_parser = delete_sp.add_parser('host')
-    host_parser.required = True
-    host_parser.add_argument('address', help='IP address of the host')
-
-    # Command: list ...
-
-    list_parser = sp.add_parser('list')
-    list_sp = list_parser.add_subparsers(dest='sub_command')
-    list_sp.required = True
-
-    list_sp.add_parser('clusters')
-    # No arguments for 'list clusters' at present.
-
-    hosts_parser = list_sp.add_parser('hosts')
-    hosts_parser.add_argument(
+    # Sub-command: host list
+    verb_parser = subject_subparser.add_parser('list')
+    verb_parser.add_argument(
         'name', nargs='?', default=None,
         help='Name of the cluster (omit to list all hosts)')
-
-    # Command: start ...
-
-    start_parser = sp.add_parser('start')
-    start_sp = start_parser.add_subparsers(dest='sub_command')
-    start_sp.required = True
-
-    restart_parser = start_sp.add_parser('restart')
-    restart_parser.required = True
-    restart_parser.add_argument('name', help='Name of the cluster')
-
-    upgrade_parser = start_sp.add_parser('upgrade')
-    upgrade_parser.required = True
-    upgrade_parser.add_argument('name', help='Name of the cluster')
-    upgrade_parser.add_argument('version', help='Version to upgrade to')

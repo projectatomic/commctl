@@ -30,12 +30,19 @@ def main():
     epilog = 'Example: commctl create upgrade datacenter1 -u 7.2.2'
 
     parser = argparse.ArgumentParser(epilog=epilog)
-    commctl.cli.add_subparsers(parser)
+    subparser = parser.add_subparsers()
+
+    cluster_parser = subparser.add_parser('cluster')
+    commctl.cli.add_cluster_commands(cluster_parser)
+
+    host_parser = subparser.add_parser('host')
+    commctl.cli.add_host_commands(host_parser)
 
     args = parser.parse_args()
+
     dispatcher = args._class()
     dispatcher.set_args(args)
-    dispatcher.dispatch()
+    getattr(dispatcher, args.func)()
 
 
 if __name__ == '__main__':  # pragma: no cover
