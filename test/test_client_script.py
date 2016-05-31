@@ -103,8 +103,6 @@ class TestClientScript(TestCase):
                 _put.return_value = mock_return
 
                 sys.argv[1:] = cmd + ['test']
-                if cmd[1] == 'upgrade':
-                    sys.argv.append('1')  # arbitrary version
                 print sys.argv
                 client_script.main()
                 self.assertEquals(1, _put.call_count)

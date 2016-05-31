@@ -313,7 +313,7 @@ class Client(object):
         path = '/api/v0/cluster/{0}/upgrade'.format(name)
         return self._get(path)
 
-    def cluster_upgrade_start(self, name, version, **kwargs):
+    def cluster_upgrade_start(self, name, **kwargs):
         """
         Attempts to initiate a cluster upgrade.
 
@@ -323,7 +323,7 @@ class Client(object):
         :type kwargs: dict
         """
         path = '/api/v0/cluster/{0}/upgrade'.format(name)
-        return self._put(path, {'upgrade_to': version})
+        return self._put(path)
 
     def cluster_list(self, **kwargs):
         """
@@ -570,7 +570,6 @@ def add_cluster_commands(argument_parser):
     verb_parser = object_subparser.add_parser('start')
     verb_parser.required = True
     verb_parser.add_argument('name', help='Name of the cluster')
-    verb_parser.add_argument('version', help='Version to upgrade to')
 
     # Sub-command: cluster upgrade status
     verb_parser = object_subparser.add_parser('status')
