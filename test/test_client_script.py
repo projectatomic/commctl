@@ -94,6 +94,7 @@ class TestClientScript(TestCase):
             _realpath.return_value = self.conf
             for cmd in (
                     ['cluster', 'create'],
+                    ['cluster', 'deploy', 'start'],
                     ['cluster', 'restart', 'start'],
                     ['cluster', 'upgrade', 'start'],
                     ['host', 'create', '-c', 'honeynut', '1.2.3.4']):
@@ -103,6 +104,8 @@ class TestClientScript(TestCase):
                 _put.return_value = mock_return
 
                 sys.argv[1:] = cmd + ['test']
+                if cmd[1] == 'deploy':
+                    sys.argv.append('1')  # arbitrary version
                 print sys.argv
                 client_script.main()
                 self.assertEquals(1, _put.call_count)
