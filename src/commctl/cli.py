@@ -277,6 +277,32 @@ class Client(object):
         path = '/api/v0/host/{0}'.format(address)
         return self._delete(path)
 
+    def cluster_deploy_status(self, name, **kwargs):
+        """
+        Attempts to get the status of an ongoing tree image deployment.
+
+        :param name: The name of the cluster
+        :type name: str
+        :param kwargs: Any other keyword arguments
+        :type kwargs: dict
+        """
+        path = '/api/v0/cluster/{0}/deploy'.format(name)
+        return self._get(path)
+
+    def cluster_deploy_start(self, name, version, **kwargs):
+        """
+        Attempts to initiate a tree image deployment across a cluster.
+
+        :param name: The name of the cluster
+        :type name: str
+        :param version: The tree image version to deploy
+        :type version: str
+        :param kwargs: Any other keyword arguments
+        :type kwargs: dict
+        """
+        path = '/api/v0/cluster/{0}/deploy'.format(name)
+        return self._put(path, {'version': version})
+
     def cluster_restart_status(self, name, **kwargs):
         """
         Attempts to get the status of an ongoing cluster restart.
@@ -543,6 +569,23 @@ def add_cluster_commands(argument_parser):
     # Sub-command: cluster list
     subject_subparser.add_parser('list')
     # No arguments for 'cluster list' at present.
+
+    # Command: cluster deploy ...
+
+    object_parser = subject_subparser.add_parser('deploy')
+    object_subparser = object_parser.add_subparsers(dest='subcommand')
+    object_subparser.required = True
+
+    # Sub-command: cluster deploy start
+    verb_parser = object_subparser.add_parser('start')
+    verb_parser.required = True
+    verb_parser.add_argument('name', help='Name of the cluster')
+    verb_parser.add_argument('version', help='Version to deploy')
+
+    # Sub-command: cluster deploy status
+    verb_parser = object_subparser.add_parser('status')
+    verb_parser.required = True
+    verb_parser.add_argument('name', help='Name of the cluster')
 
     # Command: cluster restart ...
 
