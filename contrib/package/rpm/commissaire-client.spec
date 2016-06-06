@@ -1,10 +1,12 @@
+%global prerelease rc3
+
 Name:           commissaire-client
-Version:        0.0.1rc3
-Release:        1%{?dist}
+Version:        0.0.1
+Release:        0.2.%{prerelease}%{?dist}
 Summary:        CLI for Commissaire
 License:        LGPLv2+
 URL:            http://github.com/projectatomic/commctl
-Source0:        https://github.com/projectatomic/commctl/archive/%{version}.tar.gz
+Source0:        https://github.com/projectatomic/commctl/archive/%{version}%{prerelease}.tar.gz
 
 BuildArch:      noarch
 
@@ -16,15 +18,17 @@ BuildRequires:  python-mock
 BuildRequires:  python-nose
 BuildRequires:  python-flake8
 
-Requires:  python-setuptools
-Requires:  py-bcrypt
-Requires:  PyYAML
+Requires:       python-setuptools
+Requires:       py-bcrypt
+Requires:       PyYAML
+
+Provides:       commctl
 
 %description
 Command line tools for Commissaire.
 
 %prep
-%autosetup -n commctl-%{version}
+%autosetup -n commctl-%{version}%{prerelease}
 
 
 %build
@@ -48,6 +52,11 @@ Command line tools for Commissaire.
 
 
 %changelog
+* Mon Jun 06 2016 Matthew Barnes <mbarnes@redhat.com> - 0.0.1-0.2.rc3
+- Move pre-release indicator ('rc3') to Release tag for compliance with
+  packaging guidelines.
+- Add Provides: commctl
+
 * Wed Apr 20 2016 Matthew Barnes <mbarnes@redhat.com> - 0.0.1rc3-1
 - Update for RC3.
 
