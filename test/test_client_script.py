@@ -65,7 +65,7 @@ class TestClientScript(TestCase):
                     (['cluster', 'list'], '[]'),
                     (['cluster', 'restart', 'status', 'test'], '{}'),
                     (['cluster', 'upgrade', 'status', 'test'], '{}'),
-                    (['host', 'get', 'test'], '{}'),
+                    (['host', 'get', 'localhost'], '{}'),
                     (['host', 'list'], '[]'),
                     (['host', 'list', 'test'], '[]')):
                 mock_return = requests.Response()
@@ -121,14 +121,14 @@ class TestClientScript(TestCase):
                 mock.patch('os.path.realpath')) as (_delete, _realpath):
             _realpath.return_value = self.conf
             for cmd in (
-                    ['cluster', 'delete'],
-                    ['host', 'delete']):
+                    ['cluster', 'delete', 'test'],
+                    ['host', 'delete', 'localhost']):
                 mock_return = requests.Response()
                 mock_return._content = '{}'
                 mock_return.status_code = 200
                 _delete.return_value = mock_return
 
-                sys.argv[1:] = cmd + ['test']
+                sys.argv[1:] = cmd
                 print sys.argv
                 client_script.main()
                 self.assertEquals(1, _delete.call_count)
