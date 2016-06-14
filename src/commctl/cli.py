@@ -27,6 +27,7 @@ import json
 import os
 import os.path
 import platform
+import socket
 import yaml
 
 import requests
@@ -38,6 +39,23 @@ if platform.python_version_tuple()[0] == '2':
 
 def default_config_file():
     return os.path.realpath(os.path.expanduser('~/.commissaire.json'))
+
+
+def host_address(arg):
+    """
+    Conversion function for host address arguments.  Attempts to resolve
+    a host name to an IP address.
+
+    :param arg: Input string from command-line
+    :type arg: string
+    :returns: IP address
+    :rtype: string
+    """
+    try:
+        return socket.gethostbyname(arg)
+    except socket.gaierror as ex:
+        message = '{0}: {1}'.format(arg, ex.strerror)
+        raise argparse.ArgumentTypeError(message)
 
 
 class ClientError(Exception):
@@ -643,7 +661,9 @@ def add_host_commands(argument_parser):
     # Sub-command: host create
     verb_parser = subject_subparser.add_parser('create')
     verb_parser.required = True
-    verb_parser.add_argument('address', help='IP address of the host')
+    verb_parser.add_argument(
+        'address', type=host_address,
+        help='Host name or IP address')
     verb_parser.add_argument(
         'ssh-priv-key', type=argparse.FileType('rb'),
         help='SSH private key file (or "-" for stdin)')
@@ -653,12 +673,16 @@ def add_host_commands(argument_parser):
     # Sub-command: host delete
     verb_parser = subject_subparser.add_parser('delete')
     verb_parser.required = True
-    verb_parser.add_argument('address', help='IP address of the host')
+    verb_parser.add_argument(
+        'address', type=host_address,
+        help='Host name or IP address')
 
     # Sub-command: host get
     verb_parser = subject_subparser.add_parser('get')
     verb_parser.required = True
-    verb_parser.add_argument('address', help='IP address of the host')
+    verb_parser.add_argument(
+        'address', type=host_address,
+        help='Host name or IP address')
 
     # Sub-command: host list
     verb_parser = subject_subparser.add_parser('list')
