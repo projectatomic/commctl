@@ -122,7 +122,9 @@ class TestClientScript(TestCase):
             _realpath.return_value = self.conf
             for cmd in (
                     ['cluster', 'delete', 'test'],
-                    ['host', 'delete', 'localhost']):
+                    ['cluster', 'delete', 'test1', 'test2'],
+                    ['host', 'delete', 'localhost'],
+                    ['host', 'delete', '10.0.0.1', '10.0.0.2', '10.0.0.3']):
                 mock_return = requests.Response()
                 mock_return._content = '{}'
                 mock_return.status_code = 200
@@ -131,7 +133,8 @@ class TestClientScript(TestCase):
                 sys.argv[1:] = cmd
                 print sys.argv
                 client_script.main()
-                self.assertEquals(1, _delete.call_count)
+                num_things = len(cmd) - 2
+                self.assertEquals(num_things, _delete.call_count)
                 _delete.reset_mock()
 
     def test_client_script_passhash_with_password(self):

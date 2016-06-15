@@ -187,7 +187,7 @@ class Client(object):
             ret = resp.json()
             if ret:
                 return ret
-            return ['Created']
+            return ['Created {0}'.format(path.rsplit('/')[-1])]
         if resp.status_code == 403:
             raise ClientError('Username/Password was incorrect.')
         raise ClientError(
@@ -210,7 +210,7 @@ class Client(object):
             ret = resp.json()
             if ret:
                 return ret
-            return ['Deleted']
+            return 'Deleted {0}'.format(path.rsplit('/')[-1])
         if resp.status_code == 403:
             raise ClientError('Username/Password was incorrect.')
         raise ClientError(
@@ -245,13 +245,16 @@ class Client(object):
         """
         Attempts to delete a cluster.
 
-        :param name: The name of the cluster
-        :type name: str
+        :param name: List of cluster names
+        :type name: list
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        path = '/api/v0/cluster/{0}'.format(name)
-        return self._delete(path)
+        result = []
+        for item in name:
+            path = '/api/v0/cluster/{0}'.format(item)
+            result.append(self._delete(path))
+        return result
 
     def host_get(self, address, **kwargs):
         """
@@ -287,13 +290,16 @@ class Client(object):
         """
         Attempts to delete a host.
 
-        :param address: The IP address of the host
-        :type address: str
+        :param address: List of host IP addresses
+        :type address: list
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        path = '/api/v0/host/{0}'.format(address)
-        return self._delete(path)
+        result = []
+        for item in address:
+            path = '/api/v0/host/{0}'.format(item)
+            result.append(self._delete(path))
+        return result
 
     def cluster_deploy_status(self, name, **kwargs):
         """
@@ -480,9 +486,17 @@ class Dispatcher(object):
         try:
             bound_method = getattr(client, client_method)
             call_result = bound_method(**self._args.__dict__)
-            # XXX Don't dump literals.  yaml.dump() appends an
+            # XXX Don't dump scalars.  yaml.dump() appends an
             #     ugly-looking end-of-document marker (\n...).
-            if hasattr(call_result, '__iter__'):
+            #
+            #     Also avoid tick marks on a list of scalars
+            #     so it can serve an input to another command.
+            list_of_scalars = (
+                type(call_result) is list and
+                all(not hasattr(x, '__iter__') for x in call_result))
+            if list_of_scalars:
+                output_data = '\n'.join([str(x) for x in call_result])
+            elif hasattr(call_result, '__iter__'):
                 output_data = yaml.dump(
                     call_result,
                     default_flow_style=False,
@@ -577,7 +591,7 @@ def add_cluster_commands(argument_parser):
     # Sub-command: cluster delete
     verb_parser = subject_subparser.add_parser('delete')
     verb_parser.required = True
-    verb_parser.add_argument('name', help='Name of the cluster')
+    verb_parser.add_argument('name', nargs='+', help='Name of the cluster')
 
     # Sub-command: cluster get
     verb_parser = subject_subparser.add_parser('get')
@@ -674,7 +688,7 @@ def add_host_commands(argument_parser):
     verb_parser = subject_subparser.add_parser('delete')
     verb_parser.required = True
     verb_parser.add_argument(
-        'address', type=host_address,
+        'address', nargs='+', type=host_address,
         help='Host name or IP address')
 
     # Sub-command: host get
