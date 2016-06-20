@@ -28,6 +28,7 @@ import os
 import os.path
 import platform
 import socket
+import tempfile
 import yaml
 
 import requests
@@ -404,6 +405,45 @@ class Client(object):
             path = '/api/v0/cluster/{0}/hosts'.format(name)
             return self._get(path)
 
+    def host_ssh(self, hostname, extra_args, **kwargs):
+        """
+        Uses the HostCreds endpoint to download credentials and execute ssh.
+
+        :param hostname: The hostname or IP address
+        :type hostname: str
+        :param extra_args: Extra arguments to pass to ssh
+        :type extra_args: list
+        :param kwargs: Any other keyword arguments
+        :type kwargs: dict
+        """
+        import subprocess
+        # XXX: Normally we should use subprocess.call without the shell. Since
+        #      this command is really a wrapper around a shell command we allow
+        #      shell usage.
+        path = '/api/v0/host/{0}/creds'.format(hostname)
+        result = self._get(path)
+        ssh_priv_key_path = None
+        if result.get('ssh_priv_key') and result.get('remote_user'):
+            try:
+                fd, ssh_priv_key_path = tempfile.mkstemp()
+                with open(ssh_priv_key_path, 'w') as ssh_priv_key_fobj:
+                    ssh_priv_key_fobj.write(
+                        base64.decodestring(result['ssh_priv_key']))
+                os.close(fd)
+                print('Calling ssh...')
+                subprocess.call('ssh -i {} -l {} {} {}'.format(
+                    ssh_priv_key_path,
+                    result['remote_user'],
+                    ' '.join(extra_args),
+                    hostname), shell=True)
+            finally:
+                # Remove the keyfile
+                if ssh_priv_key_path:
+                    os.remove(ssh_priv_key_path)
+                    print('Removed temporary ssh key')
+        else:
+            print('Unable to determine key and user from the server.')
+
 
 class Dispatcher(object):
     """
@@ -703,3 +743,14 @@ def add_host_commands(argument_parser):
     verb_parser.add_argument(
         'name', nargs='?', default=None,
         help='Name of the cluster (omit to list all hosts)')
+
+    # XXX: Reviewer, does it make sense for this to live here?
+    # Sub-command: host ssh
+    verb_parser = subject_subparser.add_parser('ssh')
+
+    verb_parser.required = True
+    verb_parser.add_argument(
+        'hostname', help='Host to connect to. EX: 10.1.1.1')
+    verb_parser.add_argument(
+        'extra_args', nargs=argparse.REMAINDER,
+        help='Any other arguments to pass to ssh')

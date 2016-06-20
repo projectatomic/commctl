@@ -135,6 +135,40 @@ class TestClientScript(TestCase):
                 self.assertEquals(num_things, _delete.call_count)
                 _delete.reset_mock()
 
+    def test_client_script_host_ssh(self):
+        """
+        Verify use cases for the client_script ssh requests.
+        """
+        sys.argv = ['', 'host', 'ssh']
+        with contextlib.nested(
+                mock.patch('requests.Session.get'),
+                mock.patch('os.path.realpath'),
+                mock.patch('subprocess.call'),
+                mock.patch('tempfile.mkstemp'),
+                mock.patch('os.close')) as (
+                    _get, _realpath, _call, _mkstemp, _close):
+            _realpath.return_value = self.conf
+            _mkstemp.return_value = (1, '/tmp/test_key_file')
+            for cmd in (
+                    ['127.0.0.1'],
+                    ['127.0.0.1', '-p 22'],
+                    ['127.0.0.1', '-p 22 -v']):
+                mock_return = requests.Response()
+                mock_return._content = (
+                    '{"ssh_priv_key": "dGVzdAo=", "remote_user": "root"}')
+                mock_return.status_code = 200
+                _get.return_value = mock_return
+
+                sys.argv[3:] = cmd
+                expected = 'ssh -i /tmp/test_key_file -l root {} {}'.format(
+                    ' '.join(cmd[1:]), cmd[0])
+                print sys.argv
+                client_script.main()
+                _get.assert_called_once()
+                _call.assert_called_once_with(expected, shell=True)
+                _call.reset_mock()
+                _get.reset_mock()
+
     def test_client_script_passhash_with_password(self):
         """
         Verify passhash works via --password
