@@ -430,12 +430,11 @@ class Client(object):
                     ssh_priv_key_fobj.write(
                         base64.decodestring(result['ssh_priv_key']))
                 os.close(fd)
-                print('Calling ssh...')
-                subprocess.call('ssh -i {0} -l {1} {2} {3}'.format(
-                    ssh_priv_key_path,
-                    result['remote_user'],
-                    ' '.join(extra_args),
-                    hostname), shell=True)
+                ssh_cmd = ('ssh -i {0} -l {1} {2} {3}'.format(
+                    ssh_priv_key_path, result['remote_user'],
+                    ' '.join(extra_args), hostname))
+                print('Calling ssh command via shell: "{0}"'.format(ssh_cmd))
+                subprocess.call(ssh_cmd, shell=True)
             finally:
                 # Remove the keyfile
                 if ssh_priv_key_path:
@@ -744,7 +743,6 @@ def add_host_commands(argument_parser):
         'name', nargs='?', default=None,
         help='Name of the cluster (omit to list all hosts)')
 
-    # XXX: Reviewer, does it make sense for this to live here?
     # Sub-command: host ssh
     verb_parser = subject_subparser.add_parser('ssh')
 
