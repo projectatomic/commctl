@@ -140,13 +140,11 @@ class TestClientScript(TestCase):
         Verify use cases for the client_script ssh requests.
         """
         sys.argv = ['', 'host', 'ssh']
-        with contextlib.nested(
-                mock.patch('requests.Session.get'),
-                mock.patch('os.path.realpath'),
-                mock.patch('subprocess.call'),
-                mock.patch('tempfile.mkstemp'),
-                mock.patch('os.close')) as (
-                    _get, _realpath, _call, _mkstemp, _close):
+        with mock.patch('requests.Session.get') as _get, \
+                mock.patch('os.path.realpath') as _realpath, \
+                mock.patch('subprocess.call') as _call, \
+                mock.patch('tempfile.mkstemp') as _mkstemp, \
+                mock.patch('os.close') as _close:
             _realpath.return_value = self.conf
             _mkstemp.return_value = (1, '/tmp/test_key_file')
             for cmd in (
