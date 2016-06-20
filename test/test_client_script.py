@@ -160,7 +160,7 @@ class TestClientScript(TestCase):
                 _get.return_value = mock_return
 
                 sys.argv[3:] = cmd
-                expected = 'ssh -i /tmp/test_key_file -l root {} {}'.format(
+                expected = 'ssh -i /tmp/test_key_file -l root {0} {1}'.format(
                     ' '.join(cmd[1:]), cmd[0])
                 print sys.argv
                 client_script.main()
