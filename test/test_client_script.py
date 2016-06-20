@@ -15,12 +15,15 @@
 # 02110-1301  USA
 """
 Test cases for the commctl.client_script script.
+
+.. note:: The use of \ in the with/mock blocks is required for readability.
+          Unfortunately, ()'s for multiline statements do not work with
+          the with structure in 2.7.
 """
 
 import os
 import sys
 
-import contextlib
 import mock
 import requests
 import bcrypt
@@ -56,9 +59,8 @@ class TestClientScript(TestCase):
         Verify use cases for the client_script get requests.
         """
         sys.argv = ['']
-        with contextlib.nested(
-                mock.patch('requests.Session.get'),
-                mock.patch('os.path.realpath')) as (_get, _realpath):
+        with mock.patch('requests.Session.get') as _get, \
+                mock.patch('os.path.realpath') as _realpath:
             _realpath.return_value = self.conf
             for cmd, content in (
                     (['cluster', 'get', 'test'], '{}'),
@@ -84,13 +86,10 @@ class TestClientScript(TestCase):
         Verify use cases for the client_script put requests.
         """
         sys.argv = ['']
-        with contextlib.nested(
-                mock.patch('requests.Session.put'),
-                mock.patch('os.path.realpath'),
-                mock.patch('argparse.FileType.__call__',
-                           mock.mock_open(read_data='1234567890'),
-                           create=True)
-                ) as (_put, _realpath, _filetype):
+        with mock.patch('requests.Session.put') as _put, \
+                mock.patch('os.path.realpath') as _realpath, \
+                mock.patch('argparse.FileType.__call__', mock.mock_open(
+                    read_data='1234567890'), create=True) as _filetype:
             _realpath.return_value = self.conf
             for cmd in (
                     ['cluster', 'create'],
@@ -116,9 +115,8 @@ class TestClientScript(TestCase):
         Verify use cases for the client_script delete requests.
         """
         sys.argv = ['', 'delete']
-        with contextlib.nested(
-                mock.patch('requests.Session.delete'),
-                mock.patch('os.path.realpath')) as (_delete, _realpath):
+        with mock.patch('requests.Session.delete') as _delete, \
+                mock.patch('os.path.realpath') as  _realpath:
             _realpath.return_value = self.conf
             for cmd in (
                     ['cluster', 'delete', 'test'],
@@ -142,9 +140,8 @@ class TestClientScript(TestCase):
         Verify passhash works via --password
         """
         sys.argv = ['', 'passhash', '--password', 'mypass']
-        with contextlib.nested(
-                mock.patch('sys.stdout', new_callable=StringIO),
-                mock.patch('os.path.realpath')) as (_out, _realpath):
+        with mock.patch('sys.stdout', new_callable=StringIO) as _out, \
+                mock.patch('os.path.realpath') as _realpath:
             _realpath.return_value = self.conf
             client_script.main()
             hashed = _out.getvalue().strip()
@@ -157,9 +154,8 @@ class TestClientScript(TestCase):
         with open('pwdfile', 'w') as f:
             f.write("mypass");
         sys.argv = ['', 'passhash', '--file', 'pwdfile']
-        with contextlib.nested(
-                mock.patch('sys.stdout', new_callable=StringIO),
-                mock.patch('os.path.realpath')) as (_out, _realpath):
+        with mock.patch('sys.stdout', new_callable=StringIO) as _out, \
+                mock.patch('os.path.realpath') as _realpath:
             _realpath.return_value = self.conf
             client_script.main()
             os.remove('pwdfile')
@@ -171,10 +167,9 @@ class TestClientScript(TestCase):
         Verify passhash works via stdin
         """
         sys.argv = ['', 'passhash', '--file', '-']
-        with contextlib.nested(
-                mock.patch('sys.stdout', new_callable=StringIO),
-                mock.patch('sys.stdin', StringIO("mypass")),
-                mock.patch('os.path.realpath')) as (_out, _in, _realpath):
+        with mock.patch('sys.stdout', new_callable=StringIO) as _out, \
+                 mock.patch('sys.stdin', StringIO("mypass")) as _in, \
+                 mock.patch('os.path.realpath') as _realpath:
             _realpath.return_value = self.conf
             client_script.main()
             hashed = _out.getvalue().strip()
@@ -185,10 +180,9 @@ class TestClientScript(TestCase):
         Verify passhash works via getpass prompt
         """
         sys.argv = ['', 'passhash']
-        with contextlib.nested(
-                mock.patch('sys.stdout', new_callable=StringIO),
-                mock.patch('getpass.getpass'),
-                mock.patch('os.path.realpath')) as (_out, _gp, _realpath):
+        with mock.patch('sys.stdout', new_callable=StringIO) as _out, \
+                mock.patch('getpass.getpass') as _gp, \
+                mock.patch('os.path.realpath') as _realpath:
             _realpath.return_value = self.conf
             _gp.return_value = 'mypass'
             client_script.main()
