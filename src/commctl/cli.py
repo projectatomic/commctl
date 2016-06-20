@@ -431,7 +431,7 @@ class Client(object):
                         base64.decodestring(result['ssh_priv_key']))
                 os.close(fd)
                 print('Calling ssh...')
-                subprocess.call('ssh -i {} -l {} {} {}'.format(
+                subprocess.call('ssh -i {0} -l {1} {2} {3}'.format(
                     ssh_priv_key_path,
                     result['remote_user'],
                     ' '.join(extra_args),
