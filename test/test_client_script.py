@@ -100,6 +100,7 @@ class TestClientScript(TestCase):
                 mock_return = requests.Response()
                 mock_return._content = '{}'
                 mock_return.status_code = 201
+                mock_return.request = mock.MagicMock(path_url='/fake/path')
                 _put.return_value = mock_return
 
                 sys.argv[1:] = cmd + ['test']

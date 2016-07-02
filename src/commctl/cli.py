@@ -150,6 +150,42 @@ class Client(object):
         self._con.headers['Content-Type'] = 'application/json'
         self._con.auth = (conf['username'], conf['password'])
 
+    def _handle_status(self, resp, operation):
+        """
+        Generic handling of status responses.
+
+        :param resp: The response to look at.
+        :type resp: requests.Response
+        :param operation: The name of the operation. EX: get
+        :type operation: str
+        :rtype: varies
+        :raises: ClientError
+        """
+        # Handle 204 No Content as its own case
+        if resp.status_code == 204:
+            return 'No instance'
+        # Allow any other 2xx code
+        elif resp.status_code > 199 and resp.status_code < 300:
+            try:
+                ret = resp.json()
+                if ret:
+                    return ret
+            except ValueError:
+                # Not everything returns JSON.
+                # TODO: If/when logging is added add a debug statement
+                pass
+            if resp.status_code == 201:
+                return ['Created {0}'.format(
+                    resp.request.path_url.rsplit('/')[-1])]
+            return 'Success'
+        elif resp.status_code == 403:
+            raise ClientError('Username/Password was incorrect.')
+        elif resp.status_code == 404:
+            return 'No object found.'
+        raise ClientError(
+            'Unable to {0} the object at {1}: {2}'.format(
+                operation, resp.request.path_url, resp.status_code))
+
     def _get(self, path):
         """
         Shorthand for GETing.
@@ -160,17 +196,7 @@ class Client(object):
         :rtype: None or requests.Response
         """
         resp = self._con.get(path)
-        # Allow any 2xx code
-        if resp.status_code > 199 and resp.status_code < 300:
-            ret = resp.json()
-            if ret:
-                return ret
-            return
-        if resp.status_code == 403:
-            raise ClientError('Username/Password was incorrect.')
-        raise ClientError(
-            'Unable to get the object at {0}: {1}'.format(
-                path, resp.status_code))
+        return self._handle_status(resp, 'get')
 
     def _put(self, path, data={}):
         """
@@ -184,16 +210,7 @@ class Client(object):
         :rtype: None or requests.Response
         """
         resp = self._con.put(path, data=json.dumps(data))
-        if resp.status_code == 201:
-            ret = resp.json()
-            if ret:
-                return ret
-            return ['Created {0}'.format(path.rsplit('/')[-1])]
-        if resp.status_code == 403:
-            raise ClientError('Username/Password was incorrect.')
-        raise ClientError(
-            'Unable to create an object at {0}: {1}'.format(
-                path, resp.status_code))
+        return self._handle_status(resp, 'create')
 
     def _delete(self, path, data={}):
         """
@@ -207,16 +224,7 @@ class Client(object):
         :rtype: None or requests.Response
         """
         resp = self._con.delete(path, data=json.dumps(data))
-        if resp.status_code == 200:
-            ret = resp.json()
-            if ret:
-                return ret
-            return 'Deleted {0}'.format(path.rsplit('/')[-1])
-        if resp.status_code == 403:
-            raise ClientError('Username/Password was incorrect.')
-        raise ClientError(
-            'Unable to delete an object at {0}: {1}'.format(
-                path, resp.status_code))
+        return self._handle_status(resp, 'delete')
 
     def cluster_get(self, name, **kwargs):
         """
@@ -398,8 +406,10 @@ class Client(object):
         if not name:
             path = '/api/v0/hosts'
             result = self._get(path)
-            if result:
+            # If it is a dict handle it as hosts
+            if isinstance(result, dict):
                 result = [host['address'] for host in result]
+            # otherwise return as is
             return result
         else:
             path = '/api/v0/cluster/{0}/hosts'.format(name)
