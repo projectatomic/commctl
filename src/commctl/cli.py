@@ -150,14 +150,12 @@ class Client(object):
         self._con.headers['Content-Type'] = 'application/json'
         self._con.auth = (conf['username'], conf['password'])
 
-    def _handle_status(self, resp, operation):
+    def _handle_status(self, resp):
         """
         Generic handling of status responses.
 
         :param resp: The response to look at.
         :type resp: requests.Response
-        :param operation: The name of the operation. EX: get
-        :type operation: str
         :rtype: varies
         :raises: ClientError
         """
@@ -184,7 +182,7 @@ class Client(object):
             return 'No object found.'
         raise ClientError(
             'Unable to {0} the object at {1}: {2}'.format(
-                operation, resp.request.path_url, resp.status_code))
+                resp.request.method, resp.request.path_url, resp.status_code))
 
     def _get(self, path):
         """
@@ -196,7 +194,7 @@ class Client(object):
         :rtype: None or requests.Response
         """
         resp = self._con.get(path)
-        return self._handle_status(resp, 'get')
+        return self._handle_status(resp)
 
     def _put(self, path, data={}):
         """
@@ -210,7 +208,7 @@ class Client(object):
         :rtype: None or requests.Response
         """
         resp = self._con.put(path, data=json.dumps(data))
-        return self._handle_status(resp, 'create')
+        return self._handle_status(resp)
 
     def _delete(self, path, data={}):
         """
@@ -224,7 +222,7 @@ class Client(object):
         :rtype: None or requests.Response
         """
         resp = self._con.delete(path, data=json.dumps(data))
-        return self._handle_status(resp, 'delete')
+        return self._handle_status(resp)
 
     def cluster_get(self, name, **kwargs):
         """
