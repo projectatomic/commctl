@@ -160,10 +160,10 @@ class Client(object):
         :raises: ClientError
         """
         # Handle 204 No Content as its own case
-        if resp.status_code == 204:
+        if resp.status_code == requests.codes.NO_CONTENT:
             return 'No instance'
         # Allow any other 2xx code
-        elif resp.status_code > 199 and resp.status_code < 300:
+        elif str(resp.status_code).startswith('2'):
             try:
                 ret = resp.json()
                 if ret:
@@ -172,13 +172,13 @@ class Client(object):
                 # Not everything returns JSON.
                 # TODO: If/when logging is added add a debug statement
                 pass
-            if resp.status_code == 201:
+            if resp.status_code == requests.codes.CREATED:
                 return ['Created {0}'.format(
                     resp.request.path_url.rsplit('/')[-1])]
             return 'Success'
-        elif resp.status_code == 403:
+        elif resp.status_code == requests.codes.FORBIDDEN:
             raise ClientError('Username/Password was incorrect.')
-        elif resp.status_code == 404:
+        elif resp.status_code == requests.codes.NOT_FOUND:
             return 'No object found.'
         raise ClientError(
             'Unable to {0} the object at {1}: {2}'.format(
