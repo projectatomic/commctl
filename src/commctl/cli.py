@@ -246,7 +246,10 @@ class Client(object):
         :type kwargs: dict
         """
         path = '/api/v0/cluster/{0}'.format(name)
-        return self._put(path)
+        data = {
+            'type': kwargs['type'],
+        }
+        return self._put(path, data)
 
     def cluster_delete(self, name, **kwargs):
         """
@@ -633,6 +636,9 @@ def add_cluster_commands(argument_parser):
     # Sub-command: cluster create
     verb_parser = subject_subparser.add_parser('create')
     verb_parser.required = True
+    verb_parser.add_argument(
+        'type', help='Type of the cluster',
+        choices=('kubernetes', 'host_only'))
     verb_parser.add_argument('name', help='Name of the cluster')
 
     # Sub-command: cluster delete

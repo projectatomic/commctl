@@ -92,7 +92,7 @@ class TestClientScript(TestCase):
                     read_data='1234567890'), create=True) as _filetype:
             _realpath.return_value = self.conf
             for cmd in (
-                    ['cluster', 'create'],
+                    ['cluster', 'create', 'kubernetes'],
                     ['cluster', 'deploy', 'start'],
                     ['cluster', 'restart', 'start'],
                     ['cluster', 'upgrade', 'start'],
