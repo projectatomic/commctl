@@ -637,8 +637,8 @@ def add_cluster_commands(argument_parser):
     verb_parser = subject_subparser.add_parser('create')
     verb_parser.required = True
     verb_parser.add_argument(
-        'type', help='Type of the cluster',
-        choices=('kubernetes', 'host_only'))
+        '-t', '--type', help='Type of the cluster',
+        choices=('kubernetes', 'host_only'), default='kubernetes')
     verb_parser.add_argument('name', help='Name of the cluster')
 
     # Sub-command: cluster delete
