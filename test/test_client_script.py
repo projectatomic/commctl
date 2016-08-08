@@ -69,7 +69,8 @@ class TestClientScript(TestCase):
                     (['cluster', 'upgrade', 'status', 'test'], '{}'),
                     (['host', 'get', 'localhost'], '{}'),
                     (['host', 'list'], '[]'),
-                    (['host', 'list', 'test'], '[]')):
+                    (['host', 'list', 'test'], '[]'),
+                    (['host', 'status', 'localhost'], '{}')):
                 mock_return = requests.Response()
                 mock_return._content = content
                 mock_return.status_code = 200
