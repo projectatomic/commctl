@@ -311,6 +311,18 @@ class Client(object):
             result.append(self._delete(path))
         return result
 
+    def host_status(self, address, **kwargs):
+        """
+        Attempts to get the status of a host.
+
+        :param address: The IP address of the host
+        :type address: str
+        :param kwargs: Any other keyword arguments
+        :type kwargs: dict
+        """
+        path = '/api/v0/host/{0}/status'.format(address)
+        return self._get(path)
+
     def cluster_deploy_status(self, name, **kwargs):
         """
         Attempts to get the status of an ongoing tree image deployment.
@@ -756,6 +768,13 @@ def add_host_commands(argument_parser):
     verb_parser.add_argument(
         'name', nargs='?', default=None,
         help='Name of the cluster (omit to list all hosts)')
+
+    # Sub-command: host status
+    verb_parser = subject_subparser.add_parser('status')
+    verb_parser.required = True
+    verb_parser.add_argument(
+        'address', type=host_address,
+        help='Host name or IP address')
 
     # Sub-command: host ssh
     verb_parser = subject_subparser.add_parser('ssh')
