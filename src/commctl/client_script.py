@@ -69,15 +69,15 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command == 'passhash':
-        try:
+    try:
+        if args.command == 'passhash':
             print(do_passhash(args))
-        except Exception as ex:
-            parser.error(ex)
-    else:
-        dispatcher = args._class()
-        dispatcher.set_args(args)
-        getattr(dispatcher, args.func)()
+        else:
+            dispatcher = args._class()
+            dispatcher.set_args(args)
+            getattr(dispatcher, args.func)()
+    except Exception as ex:
+        parser.error(ex)
 
 
 if __name__ == '__main__':  # pragma: no cover

@@ -73,6 +73,13 @@ class NoMoreServersError(ClientError):
     pass
 
 
+class InvalidConfiguration(ClientError):
+    """
+    Raised when a configuration element forces a stop of execution.
+    """
+    pass
+
+
 class MultiServerSession(requests.Session):
     """
     A requests Session which, when given a ConnectionError, will try the same
@@ -148,7 +155,20 @@ class Client(object):
         self.endpoint = conf['endpoint'][0]
         self._con = MultiServerSession(self._endpoints)
         self._con.headers['Content-Type'] = 'application/json'
-        self._con.auth = (conf['username'], conf['password'])
+        # Favor a kubeconfig over user/pass
+        if conf.get('kubeconfig', None):
+            from commctl import kubeconfig
+            try:
+                kube_user = kubeconfig.KubeConfig(
+                    conf['kubeconfig']).current_user
+
+                for header in kube_user.auth_headers:
+                    self._con.headers[header[0]] = header[1]
+            except kubeconfig.KubeConfigNoUserError as error:
+                raise InvalidConfiguration(
+                    '{0}: {1}'.format(type(error), error))
+        else:
+            self._con.auth = (conf['username'], conf['password'])
 
     def _handle_status(self, resp):
         """
@@ -177,7 +197,7 @@ class Client(object):
                     resp.request.path_url.rsplit('/')[-1])]
             return 'Success'
         elif resp.status_code == requests.codes.FORBIDDEN:
-            raise ClientError('Username/Password was incorrect.')
+            raise ClientError('The provided credentials were incorrect.')
         elif resp.status_code == requests.codes.NOT_FOUND:
             return 'No object found.'
         raise ClientError(
@@ -528,16 +548,21 @@ class Dispatcher(object):
                 'with a comma.'))
 
         # Prompt for any missing configuration.
+        requires_user_pass = True
 
-        for required in ('username', 'endpoint'):
-            if required not in conf.keys():
-                conf[required] = input(
-                    '{0}: '.format(required.capitalize()))
+        if 'endpoint' not in conf.keys():
+            conf['endpoint'] = input('Endpoint: ')
+        if 'kubeconfig' in conf.keys():
+            # If we have a kubeconfig entry move along. It will be handled
+            # once the Client is created.
+            requires_user_pass = False
+        if requires_user_pass:
+            if 'username' not in conf.keys():
+                conf['username'] = input('Username: ')
+            if 'password' not in conf.keys():
+                import getpass
+                conf['password'] = getpass.getpass()
 
-        # Check password on it's own
-        if 'password' not in conf.keys():
-            import getpass
-            conf['password'] = getpass.getpass()
         if type(conf['endpoint']) is not list:
             conf['endpoint'] = [conf['endpoint']]
 
