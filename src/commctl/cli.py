@@ -268,6 +268,7 @@ class Client(object):
         path = '/api/v0/cluster/{0}'.format(name)
         data = {
             'type': kwargs['type'],
+            'network': kwargs['network'],
         }
         return self._put(path, data)
 
@@ -676,6 +677,9 @@ def add_cluster_commands(argument_parser):
     verb_parser.add_argument(
         '-t', '--type', help='Type of the cluster',
         choices=('kubernetes', 'host_only'), default='kubernetes')
+    verb_parser.add_argument(
+        '-n', '--network', help='Type of network',
+        choices=('flannel_etcd', 'flannel_server'), default='flannel_etcd')
     verb_parser.add_argument('name', help='Name of the cluster')
 
     # Sub-command: cluster delete
