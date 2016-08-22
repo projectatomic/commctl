@@ -56,6 +56,9 @@ def main():
     host_parser = subparser.add_parser('host')
     commctl.cli.add_host_commands(host_parser)
 
+    networks_parser = subparser.add_parser('network')
+    commctl.cli.add_network_commands(networks_parser)
+
     # XXX passhash is more like a helper script.  Keep it out
     #     of the shared API for now, and exclusive to commctl.
     subcmd_parser = subparser.add_parser('passhash')

@@ -67,10 +67,14 @@ class TestClientScript(TestCase):
                     (['cluster', 'list'], '[]'),
                     (['cluster', 'restart', 'status', 'test'], '{}'),
                     (['cluster', 'upgrade', 'status', 'test'], '{}'),
+                    (['cluster', 'restart', 'status', 'test'], '{}'),
                     (['host', 'get', 'localhost'], '{}'),
                     (['host', 'list'], '[]'),
                     (['host', 'list', 'test'], '[]'),
-                    (['host', 'status', 'localhost'], '{}')):
+                    (['host', 'status', 'localhost'], '{}'),
+                    (['network', 'get', 'test'], '{}'),
+                    (['network', 'list'], '[]'),
+                    ):
                 mock_return = requests.Response()
                 mock_return._content = content
                 mock_return.status_code = 200
@@ -127,7 +131,9 @@ class TestClientScript(TestCase):
                     ['cluster', 'delete', 'test'],
                     ['cluster', 'delete', 'test1', 'test2'],
                     ['host', 'delete', 'localhost'],
-                    ['host', 'delete', '10.0.0.1', '10.0.0.2', '10.0.0.3']):
+                    ['host', 'delete', '10.0.0.1', '10.0.0.2', '10.0.0.3'],
+                    ['network', 'delete', 'test'],
+                    ['network', 'delete', 'test', 'test2', 'test3']):
                 mock_return = requests.Response()
                 mock_return._content = '{}'
                 mock_return.status_code = 200

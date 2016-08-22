@@ -418,6 +418,49 @@ class Client(object):
         path = '/api/v0/cluster/{0}/upgrade'.format(name)
         return self._put(path)
 
+    def network_get(self, name, **kwargs):
+        """
+        Attempts to get network information.
+
+        :param name: The name of the network
+        :type name: str
+        :param kwargs: Any other keyword arguments
+        :type kwargs: dict
+        """
+        path = '/api/v0/network/{0}'.format(name)
+        return self._get(path)
+
+    def network_create(self, name, **kwargs):
+        """
+        Attempts to create a network.
+
+        :param name: The name of the network
+        :type name: str
+        :param kwargs: Any other keyword arguments
+        :type kwargs: dict
+        """
+        path = '/api/v0/network/{0}'.format(name)
+        data = {
+            'type': kwargs.get('type'),
+            'options': kwargs.get('options', {}),
+        }
+        return self._put(path, data)
+
+    def network_delete(self, name, **kwargs):
+        """
+        Attempts to delete a network.
+
+        :param name: List of network names
+        :type name: list
+        :param kwargs: Any other keyword arguments
+        :type kwargs: dict
+        """
+        result = []
+        for item in name:
+            path = '/api/v0/network/{0}'.format(item)
+            result.append(self._delete(path))
+        return result
+
     def cluster_list(self, **kwargs):
         """
         Attempts to list available clusters.
@@ -448,6 +491,16 @@ class Client(object):
         else:
             path = '/api/v0/cluster/{0}/hosts'.format(name)
             return self._get(path)
+
+    def network_list(self, **kwargs):
+        """
+        Attempts to list available networks.
+
+        :param kwargs: Keyword arguments
+        :type kwargs: dict
+        """
+        path = '/api/v0/networks'
+        return self._get(path)
 
     def host_ssh(self, hostname, extra_args, **kwargs):
         """
@@ -618,6 +671,13 @@ class Dispatcher(object):
         Dispatching callback for host commands.
         """
         client_method = 'host_' + self._args.command
+        self._dispatch(client_method)
+
+    def dispatch_network_command(self):
+        """
+        Dispatching callback for network commands.
+        """
+        client_method = 'network_' + self._args.command
         self._dispatch(client_method)
 
 
@@ -814,3 +874,48 @@ def add_host_commands(argument_parser):
     verb_parser.add_argument(
         'extra_args', nargs=argparse.REMAINDER,
         help='Any other arguments to pass to ssh')
+
+
+def add_network_commands(argument_parser):
+    """
+    Augments the argument parser with "network" subcommands.
+
+    :param argument_parser: The argument parser to augment
+    :type argument_parser: argparser.ArgumentParser
+    """
+    _configure_parser(argument_parser, 'dispatch_network_command')
+
+    # Note, commands follow a "subject-verb" or "subject-object-verb"
+    # pattern.  e.g. "host create" or "cluster upgrade start"
+
+    subject_subparser = argument_parser.add_subparsers(dest='command')
+
+    # Sub-command: network create
+    verb_parser = subject_subparser.add_parser('create')
+    verb_parser.required = True
+    verb_parser.add_argument(
+        'name', type=str, help='Name of the network')
+    verb_parser.add_argument(
+        '-t', '--type', choices=('flannel_etcd', 'flannel_server'),
+        default='flannel_etcd', help='Type of network')
+    verb_parser.add_argument(
+        '-o', '--options', type=json.loads,
+        default={}, help='Options for the network')
+
+    # Sub-command: network delete
+    verb_parser = subject_subparser.add_parser('delete')
+    verb_parser.required = True
+    verb_parser.add_argument(
+        'name', nargs='+', help='Name of one or more networks')
+
+    # Sub-command: network get
+    verb_parser = subject_subparser.add_parser('get')
+    verb_parser.required = True
+    verb_parser.add_argument(
+        'name', type=str, help='Name of the network')
+
+    verb_parser = subject_subparser.add_parser('list')
+    # Sub-command: network list
+    verb_parser.add_argument(
+        'name', nargs='?', default=None,
+        help='Name of the cluster (omit to list all hosts)')
