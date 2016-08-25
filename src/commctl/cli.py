@@ -738,8 +738,8 @@ def add_cluster_commands(argument_parser):
         '-t', '--type', help='Type of the cluster',
         choices=('kubernetes', 'host_only'), default='kubernetes')
     verb_parser.add_argument(
-        '-n', '--network', help='Type of network',
-        choices=('flannel_etcd', 'flannel_server'), default='flannel_etcd')
+        '-n', '--network', help='The network configuration to use',
+        default='default')
     verb_parser.add_argument('name', help='Name of the cluster')
 
     # Sub-command: cluster delete
