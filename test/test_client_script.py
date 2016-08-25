@@ -98,9 +98,9 @@ class TestClientScript(TestCase):
             _realpath.return_value = self.conf
             for cmd in (
                     ['cluster', 'create'],
-                    ['cluster', 'create', '-n', 'flannel_etcd'],
+                    ['cluster', 'create', '-n', 'default'],
                     ['cluster', 'create', '-t', 'kubernetes'],
-                    ['cluster', 'create', '-t', 'kubernetes', '-n', 'flannel_etcd'],
+                    ['cluster', 'create', '-t', 'kubernetes', '-n', 'default'],
                     ['cluster', 'deploy', 'start'],
                     ['cluster', 'restart', 'start'],
                     ['cluster', 'upgrade', 'start'],
