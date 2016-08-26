@@ -1,12 +1,11 @@
-%global prerelease rc3
 
 Name:           commissaire-client
 Version:        0.0.1
-Release:        0.2.%{prerelease}%{?dist}
+Release:        1%{?dist}
 Summary:        CLI for Commissaire
 License:        LGPLv2+
 URL:            http://github.com/projectatomic/commctl
-Source0:        https://github.com/projectatomic/commctl/archive/%{version}%{prerelease}.tar.gz
+Source0:        https://github.com/projectatomic/commctl/archive/%{version}.tar.gz
 
 BuildArch:      noarch
 
@@ -28,7 +27,7 @@ Provides:       commctl
 Command line tools for Commissaire.
 
 %prep
-%autosetup -n commctl-%{version}%{prerelease}
+%autosetup -n commctl-%{version}
 
 
 %build
@@ -52,6 +51,9 @@ Command line tools for Commissaire.
 
 
 %changelog
+* Fri Aug 26 2016 Steve Milner <smilner@redhat.com> - 0.0.1
+- Updated for 0.0.1.
+
 * Mon Jun 06 2016 Matthew Barnes <mbarnes@redhat.com> - 0.0.1-0.2.rc3
 - Move pre-release indicator ('rc3') to Release tag for compliance with
   packaging guidelines.
