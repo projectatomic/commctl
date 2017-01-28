@@ -270,6 +270,9 @@ class Client(object):
             'type': kwargs['type'],
             'network': kwargs['network'],
         }
+
+        if 'container_manager' in list(kwargs.keys()):
+            data['container_manager'] = kwargs['container_manager']
         return self._put(path, data)
 
     def cluster_delete(self, name, **kwargs):
@@ -284,6 +287,61 @@ class Client(object):
         result = []
         for item in name:
             path = '/api/v0/cluster/{0}'.format(item)
+            result.append(self._delete(path))
+        return result
+
+    def container_manager_list(self, **kwargs):
+        """
+        Attempts to list available container_managers.
+
+        :param kwargs: Keyword arguments
+        :type kwargs: dict
+        """
+        path = '/api/v0/container_managers'
+        return self._get(path)
+
+    def container_manager_get(self, name, **kwargs):
+        """
+        Attempts to get container_manager information.
+
+        :param name: The name of the container_manager
+        :type name: str
+        :param kwargs: Any other keyword arguments
+        :type kwargs: dict
+        """
+        path = '/api/v0/container_managers/{0}'.format(name)
+        return self._get(path)
+
+    def container_manager_create(self, name, **kwargs):
+        """
+        Attempts to create a container_manager.
+
+        :param name: The name of the container_manager
+        :type name: str
+        :param kwargs: Any other keyword arguments
+        :type kwargs: dict
+        """
+        path = '/api/v0/container_managers/{0}'.format(name)
+        print(path)
+        data = {
+            'type': 'openshift',  # TODO: Update when more types are added
+            'options': kwargs.get('options', {}),
+        }
+
+        return self._put(path, data)
+
+    def container_manager_delete(self, name, **kwargs):
+        """
+        Attempts to delete a container_manager.
+
+        :param name: List of container_manager names
+        :type name: list
+        :param kwargs: Any other keyword arguments
+        :type kwargs: dict
+        """
+        result = []
+        for item in name:
+            path = '/api/v0/container_managers/{0}'.format(item)
             result.append(self._delete(path))
         return result
 
@@ -666,6 +724,15 @@ class Dispatcher(object):
             client_method += '_' + self._args.subcommand
         self._dispatch(client_method)
 
+    def dispatch_container_manager_command(self):
+        """
+        Dispatching callback for container_manager commands.
+        """
+        client_method = 'container_manager_' + self._args.command
+        if hasattr(self._args, 'subcommand'):
+            client_method += '_' + self._args.subcommand
+        self._dispatch(client_method)
+
     def dispatch_host_command(self):
         """
         Dispatching callback for host commands.
@@ -740,6 +807,10 @@ def add_cluster_commands(argument_parser):
     verb_parser.add_argument(
         '-n', '--network', help='The network configuration to use',
         default='default')
+    verb_parser.add_argument(
+        '-c', '--container-manager',
+        help='Container Manager to use for Cluster',
+        default='')
     verb_parser.add_argument('name', help='Name of the cluster')
 
     # Sub-command: cluster delete
@@ -804,6 +875,48 @@ def add_cluster_commands(argument_parser):
     verb_parser = object_subparser.add_parser('status')
     verb_parser.required = True
     verb_parser.add_argument('name', help='Name of the cluster')
+
+
+def add_container_manager_commands(argument_parser):
+    """
+    Augments the argument parser with "container_manager" subcommands.
+
+    :param argument_parser: The argument parser to augment
+    :type argument_parser: argparser.ArgumentParser
+    """
+    _configure_parser(argument_parser, 'dispatch_container_manager_command')
+
+    # Note, commands follow a "subject-verb" or "subject-object-verb"
+    # pattern.  e.g. "host create" or "cluster upgrade start"
+
+    subject_subparser = argument_parser.add_subparsers(dest='command')
+
+    # Sub-command: container_manager create
+    verb_parser = subject_subparser.add_parser('create')
+    verb_parser.required = True
+    # XXX: Update when more choices are added.
+    # verb_parser.add_argument(
+    #     '-t', '--type', help='Type of the container manager',
+    #     choices=('openshift', ), default='openshift')
+    verb_parser.add_argument(
+        '-o', '--options', help='Options for the container manager',
+        default={})
+    verb_parser.add_argument('name', help='Name of the container_manager')
+
+    # Sub-command: container_manager delete
+    verb_parser = subject_subparser.add_parser('delete')
+    verb_parser.required = True
+    verb_parser.add_argument(
+        'name', nargs='+', help='Name of the container manager')
+
+    # Sub-command: container_manager get
+    verb_parser = subject_subparser.add_parser('get')
+    verb_parser.required = True
+    verb_parser.add_argument('name', help='Name of the container manager')
+
+    # Sub-command: container_manager list
+    subject_subparser.add_parser('list')
+    # No arguments for 'container_manager list' at present.
 
 
 def add_host_commands(argument_parser):

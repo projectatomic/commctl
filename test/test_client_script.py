@@ -68,6 +68,8 @@ class TestClientScript(TestCase):
                     (['cluster', 'restart', 'status', 'test'], '{}'),
                     (['cluster', 'upgrade', 'status', 'test'], '{}'),
                     (['cluster', 'restart', 'status', 'test'], '{}'),
+                    (['container_manager', 'get', 'test'], '{}'),
+                    (['container_manager', 'list'], '[]'),
                     (['host', 'get', 'localhost'], '{}'),
                     (['host', 'list'], '[]'),
                     (['host', 'list', 'test'], '[]'),
@@ -104,6 +106,9 @@ class TestClientScript(TestCase):
                     ['cluster', 'deploy', 'start'],
                     ['cluster', 'restart', 'start'],
                     ['cluster', 'upgrade', 'start'],
+                    ['container_manager', 'create'],
+                    ['container_manager', 'create', '-o', '"{}"'],
+                    ['container_manager', 'create'],
                     ['host', 'create', '-c', 'honeynut', '1.2.3.4']):
                 mock_return = requests.Response()
                 mock_return._content = '{}'
@@ -130,6 +135,8 @@ class TestClientScript(TestCase):
             for cmd in (
                     ['cluster', 'delete', 'test'],
                     ['cluster', 'delete', 'test1', 'test2'],
+                    ['container_manager', 'delete', 'test'],
+                    ['container_manager', 'delete', 'test', 'test2'],
                     ['host', 'delete', 'localhost'],
                     ['host', 'delete', '10.0.0.1', '10.0.0.2', '10.0.0.3'],
                     ['network', 'delete', 'test'],
@@ -231,6 +238,7 @@ class TestClientScript(TestCase):
             client_script.main()
             hashed = _out.getvalue().strip()
             self.assertEquals(bcrypt.hashpw('mypass', hashed), hashed)
+
 
 class TestMultiServerSession(TestCase):
     """

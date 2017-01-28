@@ -53,6 +53,9 @@ def main():
     cluster_parser = subparser.add_parser('cluster')
     commctl.cli.add_cluster_commands(cluster_parser)
 
+    container_manager_parser = subparser.add_parser('container_manager')
+    commctl.cli.add_container_manager_commands(container_manager_parser)
+
     host_parser = subparser.add_parser('host')
     commctl.cli.add_host_commands(host_parser)
 
