@@ -324,7 +324,7 @@ class Client(object):
         path = '/api/v0/container_managers/{0}'.format(name)
         print(path)
         data = {
-            'type': kwargs['type'],
+            'type': 'openshift',  # TODO: Update when more types are added
             'options': kwargs.get('options', {}),
         }
 
@@ -807,6 +807,10 @@ def add_cluster_commands(argument_parser):
     verb_parser.add_argument(
         '-n', '--network', help='The network configuration to use',
         default='default')
+    verb_parser.add_argument(
+        '-c', '--container-manager',
+        help='Container Manager to use for Cluster',
+        default='')
     verb_parser.add_argument('name', help='Name of the cluster')
 
     # Sub-command: cluster delete
@@ -887,29 +891,30 @@ def add_container_manager_commands(argument_parser):
 
     subject_subparser = argument_parser.add_subparsers(dest='command')
 
-    # Sub-command: cluster create
+    # Sub-command: container_manager create
     verb_parser = subject_subparser.add_parser('create')
     verb_parser.required = True
-    verb_parser.add_argument(
-        '-t', '--type', help='Type of the container manager',
-        choices=('openshift', ), default='openshift')
+    # XXX: Update when more choices are added.
+    # verb_parser.add_argument(
+    #     '-t', '--type', help='Type of the container manager',
+    #     choices=('openshift', ), default='openshift')
     verb_parser.add_argument(
         '-o', '--options', help='Options for the container manager',
         default={})
     verb_parser.add_argument('name', help='Name of the container_manager')
 
-    # Sub-command: cluster delete
+    # Sub-command: container_manager delete
     verb_parser = subject_subparser.add_parser('delete')
     verb_parser.required = True
     verb_parser.add_argument(
         'name', nargs='+', help='Name of the container manager')
 
-    # Sub-command: cluster get
+    # Sub-command: container_manager get
     verb_parser = subject_subparser.add_parser('get')
     verb_parser.required = True
     verb_parser.add_argument('name', help='Name of the container manager')
 
-    # Sub-command: cluster list
+    # Sub-command: container_manager list
     subject_subparser.add_parser('list')
     # No arguments for 'container_manager list' at present.
 

@@ -108,7 +108,7 @@ class TestClientScript(TestCase):
                     ['cluster', 'upgrade', 'start'],
                     ['container_manager', 'create'],
                     ['container_manager', 'create', '-o', '"{}"'],
-                    ['container_manager', 'create', '-t', 'openshift'],
+                    ['container_manager', 'create'],
                     ['host', 'create', '-c', 'honeynut', '1.2.3.4']):
                 mock_return = requests.Response()
                 mock_return._content = '{}'
