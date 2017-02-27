@@ -297,7 +297,7 @@ class Client(object):
         :param kwargs: Keyword arguments
         :type kwargs: dict
         """
-        path = '/api/v0/container_managers'
+        path = '/api/v0/containermanagers'
         return self._get(path)
 
     def container_manager_get(self, name, **kwargs):
@@ -309,7 +309,7 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        path = '/api/v0/container_managers/{0}'.format(name)
+        path = '/api/v0/containermanager/{0}'.format(name)
         return self._get(path)
 
     def container_manager_create(self, name, **kwargs):
@@ -321,7 +321,7 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
-        path = '/api/v0/container_managers/{0}'.format(name)
+        path = '/api/v0/containermanager/{0}'.format(name)
         print(path)
         data = {
             'type': 'openshift',  # TODO: Update when more types are added
@@ -341,7 +341,7 @@ class Client(object):
         """
         result = []
         for item in name:
-            path = '/api/v0/container_managers/{0}'.format(item)
+            path = '/api/v0/containermanager/{0}'.format(item)
             result.append(self._delete(path))
         return result
 
