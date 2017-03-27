@@ -35,7 +35,7 @@ import requests
 
 # If we are on Python 2.x use raw_input as input
 if platform.python_version_tuple()[0] == '2':
-    input = raw_input
+    input = raw_input  # noqa
 
 
 def default_config_file():
@@ -571,6 +571,7 @@ class Client(object):
         :param kwargs: Any other keyword arguments
         :type kwargs: dict
         """
+        import platform
         import subprocess
         # XXX: Normally we should use subprocess.call without the shell. Since
         #      this command is really a wrapper around a shell command we allow
@@ -581,9 +582,14 @@ class Client(object):
         if result.get('ssh_priv_key') and result.get('remote_user'):
             try:
                 fd, ssh_priv_key_path = tempfile.mkstemp()
-                with open(ssh_priv_key_path, 'w') as ssh_priv_key_fobj:
-                    ssh_priv_key_fobj.write(
-                        base64.decodestring(result['ssh_priv_key']))
+                with open(ssh_priv_key_path, 'wb') as ssh_priv_key_fobj:
+                    if platform.python_version_tuple()[0] == '2':
+                        decoded_key = base64.decodestring(
+                            result['ssh_priv_key'])
+                    else:
+                        decoded_key = base64.decodebytes(
+                            bytes(result['ssh_priv_key'], 'utf8'))
+                    ssh_priv_key_fobj.write(decoded_key)
                 os.close(fd)
                 ssh_cmd = ('ssh -i {0} -l {1} {2} {3}'.format(
                     ssh_priv_key_path, result['remote_user'],

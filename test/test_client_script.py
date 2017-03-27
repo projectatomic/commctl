@@ -23,13 +23,20 @@ Test cases for the commctl.client_script script.
 
 import os
 import sys
+import platform
 
-import mock
 import requests
 import bcrypt
 import tempfile
 
-from StringIO import StringIO
+PYTHON_VERSION = int(platform.python_version_tuple()[0])
+
+if PYTHON_VERSION == 2:
+    from StringIO import StringIO
+    import mock
+else:
+    from io import StringIO
+    from unittest import mock
 
 from . import TestCase, get_fixture_file_path
 from commctl import client_script, cli
@@ -40,6 +47,13 @@ class TestClientScript(TestCase):
     Tests for the client_script.
     """
 
+    def debug_exit(self, status=0, message=None):
+        """
+        Override to keep ArgumentParser.exit() from throwing a SystemExit.
+        """
+        import traceback
+        traceback.print_exc(file=sys.stdout)
+
     def setUp(self):
         """
         Runs before each test.
@@ -47,6 +61,11 @@ class TestClientScript(TestCase):
         self.conf = get_fixture_file_path('test/commissaire.json')
         self.argv = sys.argv
         sys.argv = ['']
+
+        patcher = mock.patch(
+            'argparse.ArgumentParser.exit', self.debug_exit)
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def tearDown(self):
         """
@@ -83,7 +102,7 @@ class TestClientScript(TestCase):
                 _get.return_value = mock_return
 
                 sys.argv[1:] = cmd
-                print sys.argv
+                print(sys.argv)
                 client_script.main()
                 self.assertEquals(1, _get.call_count)
                 _get.reset_mock()
@@ -93,10 +112,15 @@ class TestClientScript(TestCase):
         Verify use cases for the client_script put requests.
         """
         sys.argv = ['']
+        read_data = '1234567890'
+        if PYTHON_VERSION > 2:
+            read_data = bytes(read_data, 'utf8')
         with mock.patch('requests.Session.put') as _put, \
                 mock.patch('os.path.realpath') as _realpath, \
-                mock.patch('argparse.FileType.__call__', mock.mock_open(
-                    read_data='1234567890'), create=True) as _filetype:
+                mock.patch(
+                    'argparse.FileType.__call__',
+                    mock.mock_open(read_data=read_data),
+                    create=True) as _filetype:
             _realpath.return_value = self.conf
             for cmd in (
                     ['cluster', 'create'],
@@ -119,7 +143,7 @@ class TestClientScript(TestCase):
                 sys.argv[1:] = cmd + ['test']
                 if cmd[1] == 'deploy':
                     sys.argv.append('1')  # arbitrary version
-                print sys.argv
+                print(sys.argv)
                 client_script.main()
                 self.assertEquals(1, _put.call_count)
                 _put.reset_mock()
@@ -147,7 +171,7 @@ class TestClientScript(TestCase):
                 _delete.return_value = mock_return
 
                 sys.argv[1:] = cmd
-                print sys.argv
+                print(sys.argv)
                 client_script.main()
                 num_things = len(cmd) - 2
                 self.assertEquals(num_things, _delete.call_count)
@@ -169,18 +193,21 @@ class TestClientScript(TestCase):
                     ['127.0.0.1'],
                     ['127.0.0.1', '-p 22'],
                     ['127.0.0.1', '-p 22 -v']):
-                mock_return = requests.Response()
-                mock_return._content = (
+                content = (
                     '{"ssh_priv_key": "dGVzdAo=", "remote_user": "root"}')
+                if PYTHON_VERSION > 2:
+                    content = bytes(content, 'utf8')
+                mock_return = requests.Response()
+                mock_return._content = content
                 mock_return.status_code = 200
                 _get.return_value = mock_return
 
                 sys.argv[3:] = cmd
                 expected = 'ssh -i /tmp/test_key_file -l root {0} {1}'.format(
                     ' '.join(cmd[1:]), cmd[0])
-                print sys.argv
+                print(sys.argv)
                 client_script.main()
-                _get.assert_called_once()
+                _get.assert_called_once_with(mock.ANY)
                 _call.assert_called_once_with(expected, shell=True)
                 _call.reset_mock()
                 _get.reset_mock()
