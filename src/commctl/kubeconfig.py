@@ -82,11 +82,16 @@ class KubeUser:
             self.type = 'token'
         elif spec['user'].get('username') and spec['user'].get('password'):
             import base64
+            import platform
             self.username = spec['user']['username']
             self.password = spec['user']['password']
+            user_pass = '{}:{}'.format(self.username, self.password)
+            if platform.python_version_tuple()[0] == '2':
+                basic_auth = base64.encodestring(user_pass)
+            else:
+                basic_auth = base64.encodebytes(bytes(user_pass, 'utf8'))
             self.auth_headers = [(
-                'Authorization', 'Basic ' + base64.encodestring(
-                    '{}:{}'.format(self.username, self.password)))]
+                'Authorization', 'Basic ' + str(basic_auth))]
             self.type = 'password'
         elif (spec['user'].get('client-certificate') and
                 spec['user'].get('client-key')):  # pragma: no cover
