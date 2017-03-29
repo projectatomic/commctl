@@ -1,4 +1,5 @@
 requests
 py-bcrypt
 setuptools
+six
 PyYAML

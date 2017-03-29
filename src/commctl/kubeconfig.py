@@ -1,4 +1,3 @@
-# Copyright (C) 2016  Red Hat, Inc
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -82,14 +81,11 @@ class KubeUser:
             self.type = 'token'
         elif spec['user'].get('username') and spec['user'].get('password'):
             import base64
-            import platform
+            import six
             self.username = spec['user']['username']
             self.password = spec['user']['password']
-            user_pass = '{}:{}'.format(self.username, self.password)
-            if platform.python_version_tuple()[0] == '2':
-                basic_auth = base64.encodestring(user_pass)
-            else:
-                basic_auth = base64.encodebytes(bytes(user_pass, 'utf8'))
+            user_pass = six.b('{}:{}'.format(self.username, self.password))
+            basic_auth = base64.encodestring(user_pass)
             self.auth_headers = [(
                 'Authorization', 'Basic ' + str(basic_auth))]
             self.type = 'password'

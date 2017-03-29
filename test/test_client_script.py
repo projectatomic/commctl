@@ -23,19 +23,15 @@ Test cases for the commctl.client_script script.
 
 import os
 import sys
-import platform
 
 import requests
 import bcrypt
 import tempfile
+import six
 
-PYTHON_VERSION = int(platform.python_version_tuple()[0])
-
-if PYTHON_VERSION == 2:
-    from StringIO import StringIO
+if six.PY2:
     import mock
 else:
-    from io import StringIO
     from unittest import mock
 
 from . import TestCase, get_fixture_file_path
@@ -112,9 +108,7 @@ class TestClientScript(TestCase):
         Verify use cases for the client_script put requests.
         """
         sys.argv = ['']
-        read_data = '1234567890'
-        if PYTHON_VERSION > 2:
-            read_data = bytes(read_data, 'utf8')
+        read_data = six.b('1234567890')
         with mock.patch('requests.Session.put') as _put, \
                 mock.patch('os.path.realpath') as _realpath, \
                 mock.patch(
@@ -193,10 +187,8 @@ class TestClientScript(TestCase):
                     ['127.0.0.1'],
                     ['127.0.0.1', '-p 22'],
                     ['127.0.0.1', '-p 22 -v']):
-                content = (
+                content = six.b(
                     '{"ssh_priv_key": "dGVzdAo=", "remote_user": "root"}')
-                if PYTHON_VERSION > 2:
-                    content = bytes(content, 'utf8')
                 mock_return = requests.Response()
                 mock_return._content = content
                 mock_return.status_code = 200
@@ -217,7 +209,7 @@ class TestClientScript(TestCase):
         Verify passhash works via --password
         """
         sys.argv = ['', 'passhash', '--password', 'mypass']
-        with mock.patch('sys.stdout', new_callable=StringIO) as _out, \
+        with mock.patch('sys.stdout', new_callable=six.StringIO) as _out, \
                 mock.patch('os.path.realpath') as _realpath:
             _realpath.return_value = self.conf
             client_script.main()
@@ -231,7 +223,7 @@ class TestClientScript(TestCase):
         with open('pwdfile', 'w') as f:
             f.write("mypass");
         sys.argv = ['', 'passhash', '--file', 'pwdfile']
-        with mock.patch('sys.stdout', new_callable=StringIO) as _out, \
+        with mock.patch('sys.stdout', new_callable=six.StringIO) as _out, \
                 mock.patch('os.path.realpath') as _realpath:
             _realpath.return_value = self.conf
             client_script.main()
@@ -244,8 +236,8 @@ class TestClientScript(TestCase):
         Verify passhash works via stdin
         """
         sys.argv = ['', 'passhash', '--file', '-']
-        with mock.patch('sys.stdout', new_callable=StringIO) as _out, \
-                 mock.patch('sys.stdin', StringIO("mypass")) as _in, \
+        with mock.patch('sys.stdout', new_callable=six.StringIO) as _out, \
+                 mock.patch('sys.stdin', six.StringIO("mypass")) as _in, \
                  mock.patch('os.path.realpath') as _realpath:
             _realpath.return_value = self.conf
             client_script.main()
@@ -257,7 +249,7 @@ class TestClientScript(TestCase):
         Verify passhash works via getpass prompt
         """
         sys.argv = ['', 'passhash']
-        with mock.patch('sys.stdout', new_callable=StringIO) as _out, \
+        with mock.patch('sys.stdout', new_callable=six.StringIO) as _out, \
                 mock.patch('getpass.getpass') as _gp, \
                 mock.patch('os.path.realpath') as _realpath:
             _realpath.return_value = self.conf
