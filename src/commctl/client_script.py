@@ -25,22 +25,6 @@ import argparse
 import commctl.cli
 
 
-def do_passhash(args):
-    """
-    Uses bcrypt to hash a password.
-    """
-    import bcrypt
-    if args.password is not None:
-        pw = args.password
-    elif args.file is not None:
-        pw = args.file.read()
-    else:
-        import getpass
-        pw = getpass.getpass()
-    salt = bcrypt.gensalt(log_rounds=args.rounds)
-    return bcrypt.hashpw(pw, salt)
-
-
 def main():
     """
     Main script entry point.
@@ -77,6 +61,7 @@ def main():
 
     try:
         if args.command == 'passhash':
+            from commctl.helpers import do_passhash
             print(do_passhash(args))
         else:
             dispatcher = args._class()
