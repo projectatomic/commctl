@@ -45,7 +45,7 @@ def main():
     """
     Main script entry point.
     """
-    epilog = 'Example: commctl create upgrade datacenter1 -u 7.2.2'
+    epilog = 'Example: commctl create deploy datacenter1 -u 7.2.2'
 
     parser = argparse.ArgumentParser(epilog=epilog)
     subparser = parser.add_subparsers(dest='command')
