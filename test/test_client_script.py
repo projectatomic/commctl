@@ -258,6 +258,31 @@ class TestClientScript(TestCase):
             hashed = _out.getvalue().strip()
             self.assertEquals(bcrypt.hashpw('mypass', hashed), hashed)
 
+    def test_client_script_user_data(self):
+        """
+        Verify user-data generates a user-data file.
+        """
+        from email.mime.multipart import MIMEMultipart
+
+        try:
+            output_file = tempfile.mktemp()
+            sys.argv = [
+                '', 'user-data',
+                '-e', 'https://example.com', '-o', output_file]
+            client_script.main()
+            with open(output_file, 'r') as f:
+                m = MIMEMultipart(f.read())
+                self.assertTrue(m.is_multipart())
+            filename_count = 0
+            for param in m.get_params():
+                if param[0] == 'filename':
+                    filename_count += 1
+
+            # We should have 3 filenames
+            self.assertEquals(3, filename_count)
+        finally:
+            os.unlink(output_file)
+
 
 class TestMultiServerSession(TestCase):
     """
