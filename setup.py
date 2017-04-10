@@ -52,7 +52,7 @@ setup(
     package_dir={'': 'src'},
     packages=find_packages('src'),
     package_data={
-        '': ['data/ansible/playbooks/*', 'data/templates/*'],
+        '': ['data/*'],
     },
     entry_points={
         'console_scripts': [
