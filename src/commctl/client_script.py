@@ -1,4 +1,4 @@
-# Copyright (C) 2016  Red Hat, Inc
+# Copyright (C) 2016-2017  Red Hat, Inc
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -46,7 +46,7 @@ def main():
     networks_parser = subparser.add_parser('network')
     commctl.cli.add_network_commands(networks_parser)
 
-    # XXX passhash is more like a helper script.  Keep it out
+    # XXX passhash and user-data are more like helper scripts.  Keep them out
     #     of the shared API for now, and exclusive to commctl.
     subcmd_parser = subparser.add_parser('passhash')
     subcmd_parser.add_argument(
@@ -57,12 +57,50 @@ def main():
     subcmd_parser.add_argument(
         '-r', '--rounds', type=int, default=12, help='Number of rounds')
 
+    user_data_parser = subparser.add_parser(
+        'user-data',
+        help='Generates a user-data file for use with cloud-init',
+        epilog='Example: commctl user-data -p -c my_cluster cluster.userdata')
+    user_data_parser.add_argument(
+        'outfile',
+        help='Path and file name to output the user-data contents')
+    user_data_parser.add_argument(
+        '-e', '--endpoint', required=True,
+        help='Commissaire endpoint to use during bootstrapping')
+    user_data_parser.add_argument(
+        '-c', '--cluster', help='Name of the cluster for new hosts to join')
+    user_data_parser.add_argument(
+        '-u', '--username', help='Commissaire user to use when bootstrapping')
+    user_data_parser.add_argument(
+        '-p', '--password', action='store_true',
+        help='Prompts for a Commissaire password to use when bootstrapping')
+    user_data_parser.add_argument(
+        '-r', '--remote-user',
+        help='Remote user to provide to Commissaire for ssh access',
+        default='root')
+    user_data_parser.add_argument(
+        '-s', '--ssh-key-path',
+        help='Path to the private key of the remote user',
+        default='/root/.ssh/id_rsa')
+    user_data_parser.add_argument(
+        '-a', '--authorized-keys-path',
+        help='Path to the authorized_keys file of the remote user',
+        default='/root/.ssh/authorized_keys')
+    user_data_parser.add_argument(
+        '-C', '--cloud-init', help='cloud-init.txt file to use')
+
     args = parser.parse_args()
 
     try:
         if args.command == 'passhash':
             from commctl.helpers import do_passhash
             print(do_passhash(args))
+        elif args.command == 'user-data':
+            from commctl.helpers import do_user_data
+            from getpass import getpass
+            if args.password:
+                args.password = getpass()
+            do_user_data(args)
         else:
             dispatcher = args._class()
             dispatcher.set_args(args)
