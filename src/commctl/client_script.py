@@ -87,7 +87,7 @@ def main():
     user_data_parser.add_argument(
         '-C', '--cloud-init', help='cloud-init.txt file to use')
     user_data_parser.add_argument(
-        '-o', '--outfile', help='Output file. If empty STDOUT is used')
+        '-o', '--outfile', help='Output file. If omitted STDOUT is used')
 
     args = parser.parse_args()
 
