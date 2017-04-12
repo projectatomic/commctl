@@ -60,7 +60,8 @@ def main():
     user_data_parser = subparser.add_parser(
         'user-data',
         help='Generates a user-data file for use with cloud-init',
-        epilog='Example: commctl user-data -p -c my_cluster cluster.userdata')
+        epilog=(
+            'Example: commctl user-data -p -c my_cluster -o cluster.userdata'))
     user_data_parser.add_argument(
         '-e', '--endpoint', required=True,
         help='Commissaire endpoint to use during bootstrapping')
