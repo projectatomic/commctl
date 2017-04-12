@@ -267,7 +267,8 @@ class TestClientScript(TestCase):
         try:
             output_file = tempfile.mktemp()
             sys.argv = [
-                '', 'user-data', '-e', 'https://example.com', output_file]
+                '', 'user-data',
+                '-e', 'https://example.com', '-o', output_file]
             client_script.main()
             with open(output_file, 'r') as f:
                 m = MIMEMultipart(f.read())

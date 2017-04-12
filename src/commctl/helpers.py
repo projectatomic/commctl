@@ -104,8 +104,12 @@ def do_user_data(args):
         for msg in sub_messages:
             combined_message.attach(msg)
 
-        # Write out the user-data file
-        with open(args.outfile, 'w') as out:
-            out.write(str(combined_message))
+        # Write out to a file if output is set
+        if args.outfile:
+            # Write out the user-data file
+            with open(args.outfile, 'w') as out:
+                out.write(str(combined_message))
+        else:
+            sys.stdout.write(str(combined_message))
     finally:
         os.unlink(files['x-commissaire-host'])

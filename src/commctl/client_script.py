@@ -62,9 +62,6 @@ def main():
         help='Generates a user-data file for use with cloud-init',
         epilog='Example: commctl user-data -p -c my_cluster cluster.userdata')
     user_data_parser.add_argument(
-        'outfile',
-        help='Path and file name to output the user-data contents')
-    user_data_parser.add_argument(
         '-e', '--endpoint', required=True,
         help='Commissaire endpoint to use during bootstrapping')
     user_data_parser.add_argument(
@@ -88,6 +85,8 @@ def main():
         default='/root/.ssh/authorized_keys')
     user_data_parser.add_argument(
         '-C', '--cloud-init', help='cloud-init.txt file to use')
+    user_data_parser.add_argument(
+        '-o', '--outfile', help='Output file. If empty STDOUT is used')
 
     args = parser.parse_args()
 
