@@ -386,6 +386,18 @@ class Client(object):
             result.append(self._delete(path))
         return result
 
+    def host_join(self, address, cluster_name, **kwargs):
+        """
+        Attempts to join a host to a cluster.
+
+        :param address: The IP address of the host
+        :type address: str
+        :param cluster_name: The name of the cluster
+        :type cluster_name: str
+        """
+        path = '/api/v0/cluster/{0}/hosts/{1}'.format(cluster_name, address)
+        return self._put(path)
+
     def host_status(self, address, **kwargs):
         """
         Attempts to get the status of a host.
@@ -397,6 +409,18 @@ class Client(object):
         """
         path = '/api/v0/host/{0}/status'.format(address)
         return self._get(path)
+
+    def host_unjoin(self, address, cluster_name, **kwargs):
+        """
+        Attempts to unjoin a host from a cluster.
+
+        :param address: The IP address of the host
+        :type address: str
+        :param cluster_name: The name of the cluster
+        :type cluster_name: str
+        """
+        path = '/api/v0/cluster/{0}/hosts/{1}'.format(cluster_name, address)
+        return self._delete(path)
 
     def cluster_deploy_status(self, name, **kwargs):
         """
@@ -962,6 +986,16 @@ def add_host_commands(argument_parser):
         'address', type=host_address,
         help='Host name or IP address')
 
+    # Sub-command: host join
+    verb_parser = subject_subparser.add_parser('join')
+    verb_parser.required = True
+    verb_parser.add_argument(
+        'address', type=host_address,
+        help='Host name or IP address')
+    verb_parser.add_argument(
+        'cluster_name',
+        help='Name of the cluster to join with')
+
     # Sub-command: host list
     verb_parser = subject_subparser.add_parser('list')
     verb_parser.add_argument(
@@ -977,13 +1011,22 @@ def add_host_commands(argument_parser):
 
     # Sub-command: host ssh
     verb_parser = subject_subparser.add_parser('ssh')
-
     verb_parser.required = True
     verb_parser.add_argument(
         'hostname', help='Host to connect to. EX: 10.1.1.1')
     verb_parser.add_argument(
         'extra_args', nargs=argparse.REMAINDER,
         help='Any other arguments to pass to ssh')
+
+    # Sub-command: host unjoin
+    verb_parser = subject_subparser.add_parser('unjoin')
+    verb_parser.required = True
+    verb_parser.add_argument(
+        'address', type=host_address,
+        help='Host name or IP address')
+    verb_parser.add_argument(
+        'cluster_name',
+        help='Name of the cluster to unjoin from')
 
 
 def add_network_commands(argument_parser):

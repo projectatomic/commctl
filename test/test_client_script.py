@@ -127,7 +127,8 @@ class TestClientScript(TestCase):
                     ['container_manager', 'create'],
                     ['container_manager', 'create', '-o', '"{}"'],
                     ['container_manager', 'create'],
-                    ['host', 'create', '-c', 'honeynut', '1.2.3.4']):
+                    ['host', 'create', '-c', 'honeynut', '1.2.3.4'],
+                    ['host', 'join', '1.2.3.4']):
                 mock_return = requests.Response()
                 mock_return._content = '{}'
                 mock_return.status_code = 201
@@ -157,6 +158,7 @@ class TestClientScript(TestCase):
                     ['container_manager', 'delete', 'test', 'test2'],
                     ['host', 'delete', 'localhost'],
                     ['host', 'delete', '10.0.0.1', '10.0.0.2', '10.0.0.3'],
+                    ['host', 'unjoin', '1.2.3.4', 'honeynut'],
                     ['network', 'delete', 'test'],
                     ['network', 'delete', 'test', 'test2', 'test3']):
                 mock_return = requests.Response()
@@ -167,7 +169,10 @@ class TestClientScript(TestCase):
                 sys.argv[1:] = cmd
                 print(sys.argv)
                 client_script.main()
-                num_things = len(cmd) - 2
+                if cmd[1] == 'unjoin':
+                    num_things = 1
+                else:
+                    num_things = len(cmd) - 2
                 self.assertEquals(num_things, _delete.call_count)
                 _delete.reset_mock()
 
