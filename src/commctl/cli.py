@@ -631,6 +631,9 @@ class Dispatcher(object):
     # This is overridden by subclasses.
     argument_parser = None
 
+    # For atomic: allow non-root users to run these commands.
+    requires_root = False
+
     def __init__(self):
         self._args = None
 
