@@ -200,6 +200,40 @@ class Client(object):
             'Unable to {0} the object at {1}: {2}'.format(
                 resp.request.method, resp.request.path_url, resp.status_code))
 
+    def _handle_status(self, resp):
+        """
+        Generic handling of status responses.
+
+        :param resp: The response to look at.
+        :type resp: requests.Response
+        :rtype: varies
+        :raises: ClientError
+        """
+        # Handle 204 No Content as its own case
+        if resp.status_code == requests.codes.NO_CONTENT:
+            return 'No instance'
+        # Allow any other 2xx code
+        elif str(resp.status_code).startswith('2'):
+            try:
+                ret = resp.json()
+                if ret:
+                    return ret
+            except ValueError:
+                # Not everything returns JSON.
+                # TODO: If/when logging is added add a debug statement
+                pass
+            if resp.status_code == requests.codes.CREATED:
+                return ['Created {0}'.format(
+                    resp.request.path_url.rsplit('/')[-1])]
+            return 'Success'
+        elif resp.status_code == requests.codes.FORBIDDEN:
+            raise ClientError('Username/Password was incorrect.')
+        elif resp.status_code == requests.codes.NOT_FOUND:
+            return 'No object found.'
+        raise ClientError(
+            'Unable to {0} the object at {1}: {2}'.format(
+                resp.request.method, resp.request.path_url, resp.status_code))
+
     def _get(self, path):
         """
         Shorthand for GETing.
