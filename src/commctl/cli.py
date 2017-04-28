@@ -55,6 +55,36 @@ def host_address(arg):
         raise argparse.ArgumentTypeError(message)
 
 
+def assemble_options(list_of_options):
+    """
+    Takes a list of options -- where each list item is a string in the form
+    of KEY=VALUE or a JSON object -- and assembles a dictionary containing
+    all of them.  If a key is specified multiple times, the last one wins.
+
+    :param list_of_options: A list of option strings
+    :type list_of_options: [str, ...] or None
+    :returns: A dictionary of options
+    :rtype: dict
+    :raises: TypeError, json.decoder.JSONDecoderError
+    """
+    option_dict = {}
+    if list_of_options is not None:
+        for option in list_of_options:
+            if '=' in option:
+                key, value = option.split('=', 1)
+                key = key.strip()
+                value = value.strip()
+                option_dict[key] = value
+            else:
+                result = json.loads(option)
+                if not isinstance(result, dict):
+                    raise TypeError(
+                        'Options must be formatted as KEY=VALUE '
+                        'or as a JSON object')
+                option_dict.update(result)
+    return option_dict
+
+
 class ClientError(Exception):
     """
     Base exception for Client Errors.
@@ -318,10 +348,10 @@ class Client(object):
         :type kwargs: dict
         """
         path = '/api/v0/containermanager/{0}'.format(name)
-        print(path)
+        options = assemble_options(kwargs['options'])
         data = {
             'type': kwargs['type'],
-            'options': kwargs.get('options', {}),
+            'options': options
         }
 
         return self._put(path, data)
@@ -919,8 +949,10 @@ def add_container_manager_commands(argument_parser):
         '-t', '--type', default='openshift',
         help='Type of the container manager (default: openshift)')
     verb_parser.add_argument(
-        '-o', '--options', help='Options for the container manager',
-        default={})
+        '-o', '--options', action='append', metavar='KEY=VALUE',
+        help='Options for the container manager; can be a JSON object '
+             'or a single KEY=VALUE pair. Cumulative if -o/--options '
+             'is specified multiple times.')
     verb_parser.add_argument('name', help='Name of the container_manager')
 
     # Sub-command: container_manager delete
