@@ -125,7 +125,7 @@ class TestClientScript(TestCase):
                     ['cluster', 'restart', 'start'],
                     ['cluster', 'upgrade', 'start'],
                     ['container_manager', 'create'],
-                    ['container_manager', 'create', '-o', '"{}"'],
+                    ['container_manager', 'create', '-o', '{}'],
                     ['container_manager', 'create'],
                     ['host', 'create', '-c', 'honeynut', '1.2.3.4'],
                     ['host', 'join', '1.2.3.4']):
