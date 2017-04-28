@@ -320,7 +320,7 @@ class Client(object):
         path = '/api/v0/containermanager/{0}'.format(name)
         print(path)
         data = {
-            'type': 'openshift',  # TODO: Update when more types are added
+            'type': kwargs['type'],
             'options': kwargs.get('options', {}),
         }
 
@@ -915,10 +915,9 @@ def add_container_manager_commands(argument_parser):
     # Sub-command: container_manager create
     verb_parser = subject_subparser.add_parser('create')
     verb_parser.required = True
-    # XXX: Update when more choices are added.
-    # verb_parser.add_argument(
-    #     '-t', '--type', help='Type of the container manager',
-    #     choices=('openshift', ), default='openshift')
+    verb_parser.add_argument(
+        '-t', '--type', default='openshift',
+        help='Type of the container manager (default: openshift)')
     verb_parser.add_argument(
         '-o', '--options', help='Options for the container manager',
         default={})
