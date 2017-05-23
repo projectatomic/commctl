@@ -128,7 +128,8 @@ class TestClientScript(TestCase):
                     ['container_manager', 'create', '-o', '{}'],
                     ['container_manager', 'create'],
                     ['host', 'create', '-c', 'honeynut', '1.2.3.4'],
-                    ['host', 'join', '1.2.3.4']):
+                    ['host', 'join', '1.2.3.4'],
+                    ['network', 'create', '-n', 'test']):
                 mock_return = requests.Response()
                 mock_return._content = '{}'
                 mock_return.status_code = 201
