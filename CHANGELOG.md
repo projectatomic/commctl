@@ -1,3 +1,10 @@
+# commctl v0.0.5
+```
+* 81dcfbd: cli: Rework --options for "container_manager create".
+* 1b77f09: cli: Enable --type when creating container manager.
+* 687bddc: Post-release version bump.
+```
+
 # commctl v0.0.4
 ```
 * 2602c30: cli: Add host join/unjoin commands.
