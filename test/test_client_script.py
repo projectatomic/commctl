@@ -93,7 +93,7 @@ class TestClientScript(TestCase):
                     (['network', 'list'], '[]'),
                     ):
                 mock_return = requests.Response()
-                mock_return._content = content
+                mock_return._content = six.b(content)
                 mock_return.status_code = 200
                 _get.return_value = mock_return
 
@@ -131,7 +131,7 @@ class TestClientScript(TestCase):
                     ['host', 'join', '1.2.3.4'],
                     ['network', 'create', '-n', 'test']):
                 mock_return = requests.Response()
-                mock_return._content = '{}'
+                mock_return._content = six.b('{}')
                 mock_return.status_code = 201
                 mock_return.request = mock.MagicMock(path_url='/fake/path')
                 _put.return_value = mock_return
@@ -163,7 +163,7 @@ class TestClientScript(TestCase):
                     ['network', 'delete', 'test'],
                     ['network', 'delete', 'test', 'test2', 'test3']):
                 mock_return = requests.Response()
-                mock_return._content = '{}'
+                mock_return._content = six.b('{}')
                 mock_return.status_code = 200
                 _delete.return_value = mock_return
 
