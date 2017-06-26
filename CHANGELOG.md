@@ -1,3 +1,13 @@
+# commctl v0.0.6
+```
+* 4c9bb6a: travis: Force lib upgrade on tests
+* 992c992: doc: Update copyright year
+* a5f18c3: test: Use six.b for _content in mocks
+* c3419d1: test: Add network create to cli tests
+* 9d5d0db: test: Add client script function tests
+* 387566d: Post-release version bump.
+```
+
 # commctl v0.0.5
 ```
 * 81dcfbd: cli: Rework --options for "container_manager create".
